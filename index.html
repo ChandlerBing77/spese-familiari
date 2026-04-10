@@ -442,15 +442,95 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 </div>
 
 <script>
-const firebaseConfig = {
+// ── FIREBASE FIRESTORE SYNC ──────────────────────────────────────────────────
+const FIREBASE_CONFIG = {
   apiKey: "AIzaSyC9MoxSrEiZMF4YnCZ9b1tCm_LjoYd4QwM",
   authDomain: "spese-familiari-f7e0e.firebaseapp.com",
   projectId: "spese-familiari-f7e0e",
   storageBucket: "spese-familiari-f7e0e.firebasestorage.app",
   messagingSenderId: "892134820651",
-  appId: "1:892134820651:web:7141e79d84076f229c936e",
-  measurementId: "G-7X2QDNM7XL"
+  appId: "1:892134820651:web:7141e79d84076f229c936e"
 };
+
+(function loadFirebase() {
+  const scripts = [
+    "https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js",
+    "https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"
+  ];
+  let loaded = 0;
+  scripts.forEach(src => {
+    const s = document.createElement('script');
+    s.src = src;
+    s.onload = () => { loaded++; if (loaded === scripts.length) initFirebase(); };
+    document.head.appendChild(s);
+  });
+})();
+
+let db = null;
+let firebaseSyncEnabled = false;
+let firestoreUnsubscribe = null;
+
+function initFirebase() {
+  try {
+    if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+    db = firebase.firestore();
+    firebaseSyncEnabled = true;
+    console.log('Firestore connesso');
+
+    // Ascolta aggiornamenti in tempo reale
+    firestoreUnsubscribe = db.collection('spese_familiari').doc('data')
+      .onSnapshot(snapshot => {
+        if (!snapshot.exists) return;
+        const data = snapshot.data();
+        if (!data) return;
+
+        const remoteTs = data._lastUpdated || 0;
+        const localTs  = parseInt(localStorage.getItem('fam_lastUpdated') || '0');
+
+        if (remoteTs > localTs) {
+          try {
+            ['fineco','bbva'].forEach(b => {
+              if (data[b]) {
+                bankData[b].transactions = data[b].transactions || bankData[b].transactions;
+                bankData[b].recurring    = data[b].recurring    || bankData[b].recurring;
+                bankData[b].reserve      = data[b].reserve      ?? bankData[b].reserve;
+                bankData[b].salvadanaio  = data[b].salvadanaio  ?? bankData[b].salvadanaio;
+                if (b === 'fineco' && data[b].cards) {
+                  bankData.fineco.cards.fausto = data[b].cards.fausto ?? bankData.fineco.cards.fausto;
+                  bankData.fineco.cards.laura  = data[b].cards.laura  ?? bankData.fineco.cards.laura;
+                }
+              }
+            });
+            localStorage.setItem('fam_lastUpdated', remoteTs);
+            renderAll();
+          } catch(e) { console.warn('Errore sync Firestore:', e); }
+        }
+      }, err => console.warn('Errore listener Firestore:', err));
+
+  } catch(e) {
+    console.warn('Firestore non disponibile, uso solo localStorage:', e);
+  }
+}
+
+const _localSave = () => {
+  try { localStorage.setItem('fam_v3', JSON.stringify(bankData)); } catch(e) {}
+};
+
+function save() {
+  const ts = Date.now();
+  localStorage.setItem('fam_lastUpdated', ts);
+  _localSave();
+  if (firebaseSyncEnabled && db) {
+    const payload = {
+      fineco: JSON.parse(JSON.stringify(bankData.fineco)),
+      bbva:   JSON.parse(JSON.stringify(bankData.bbva)),
+      _lastUpdated: ts
+    };
+    db.collection('spese_familiari').doc('data')
+      .set(payload)
+      .catch(e => console.warn('Errore scrittura Firestore:', e));
+  }
+}
 // ── BANK CONFIG ──────────────────────────────────────────────────────────────
 const BANKS={
   fineco:{name:'FINECO',color:'#7c6af7',secLabel:'Saldo reale',secType:'reserve'},
@@ -904,7 +984,7 @@ function renderHome(){
   document.getElementById('monthExpense').textContent=fmt(stats.expense);
 
   const cutoff=new Date(targetDate+'T23:59:59');
-  const sorted=[...txs()].filter(t=>new Date(t.date)<=cutoff).sort((a,b)=>new Date(b.date)-new Date(a.date)||b.createdAt-a.createdAt);
+  const now2=Date.now();const sorted=[...txs()].filter(t=>new Date(t.date)<=cutoff).sort((a,b)=>{const da=Math.abs(new Date(a.date)-now2),db=Math.abs(new Date(b.date)-now2);return da-db||b.createdAt-a.createdAt;});
   document.getElementById('homeListTitle').textContent=isToday?'Movimenti recenti':'Movimenti fino al '+new Date(targetDate).toLocaleDateString('it-IT',{day:'2-digit',month:'long'});
   const cont=document.getElementById('recentTransactions');
   cont.innerHTML=sorted.slice(0,10).length===0?emptyHtml('📭','Nessun movimento','Premi + per aggiungere'):sorted.slice(0,10).map(t=>txHtml(t)).join('');
@@ -912,11 +992,27 @@ function renderHome(){
 
 // ── RENDER MOVEMENTS ──────────────────────────────────────────────────────────
 function sortTx(list,order){
+  const now=Date.now();
   switch(order){
-    case 'date-asc':    return list.sort((a,b)=>new Date(a.date)-new Date(b.date)||a.createdAt-b.createdAt);
-    case 'amount-desc': return list.sort((a,b)=>b.amount-a.amount||new Date(b.date)-new Date(a.date));
-    case 'amount-asc':  return list.sort((a,b)=>a.amount-b.amount||new Date(b.date)-new Date(a.date));
-    default:            return list.sort((a,b)=>new Date(b.date)-new Date(a.date)||b.createdAt-a.createdAt);
+    case 'date-desc':
+      // Più vicino a oggi prima (distanza assoluta crescente)
+      return list.sort((a,b)=>{
+        const da=Math.abs(new Date(a.date)-now), db=Math.abs(new Date(b.date)-now);
+        return da-db || b.createdAt-a.createdAt;
+      });
+    case 'date-asc':
+      // Più lontano da oggi prima
+      return list.sort((a,b)=>{
+        const da=Math.abs(new Date(a.date)-now), db=Math.abs(new Date(b.date)-now);
+        return db-da || a.createdAt-b.createdAt;
+      });
+    case 'amount-desc': return list.sort((a,b)=>b.amount-a.amount||Math.abs(new Date(a.date)-now)-Math.abs(new Date(b.date)-now));
+    case 'amount-asc':  return list.sort((a,b)=>a.amount-b.amount||Math.abs(new Date(a.date)-now)-Math.abs(new Date(b.date)-now));
+    default:
+      return list.sort((a,b)=>{
+        const da=Math.abs(new Date(a.date)-now), db=Math.abs(new Date(b.date)-now);
+        return da-db || b.createdAt-a.createdAt;
+      });
   }
 }
 function setSortOrder(order,btn){
@@ -1094,12 +1190,36 @@ function saveEditBalance(){
   const nm=parseFloat(document.getElementById('editBalMain').value);
   const ns=parseFloat(document.getElementById('editBalSec').value);
   if(isNaN(nm)){alert('Importo non valido');return;}
-  const init=txs().find(t=>t.isInitial);
-  if(init){init.balance=nm;init.amount=nm;}
-  else txs().unshift({id:'init_'+Date.now(),bank:currentBank,date:new Date().toISOString().split('T')[0]+'T00:00:00',amount:nm,type:'income',desc:'Saldo iniziale',balance:nm,realBalance:null,isInitial:true,recurring:false,createdAt:0});
+
+  // Get current balance (do not touch initial tx)
+  const{balance:currentBal}=getBalanceAtDate(null);
+  const diff=Math.round((nm-currentBal)*100)/100;
+
+  if(Math.abs(diff)>0.001){
+    // Create an adjustment transaction for the difference
+    const now=new Date();
+    const dateStr=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
+    const timeStr=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+    const adjTx={
+      id:'adj_'+Date.now(),
+      bank:currentBank,
+      date:dateStr+'T'+timeStr+':00',
+      amount:Math.abs(diff),
+      type:diff>0?'income':'expense',
+      desc:'Rettifica saldo',
+      balance:0,
+      realBalance:null,
+      isInitial:false,
+      recurring:false,
+      createdAt:Date.now()
+    };
+    txs().push(adjTx);
+  }
+
+  // Secondary balance (fido/salvadanaio) — always manual
   if(currentBank==='fineco'&&!isNaN(ns))bd().reserve=ns;
-  // BBVA: salvadanaio is ONLY updated via edit, never by movements
   if(currentBank==='bbva'&&!isNaN(ns))bd().salvadanaio=ns;
+
   recalcBalances();save();closeModal('editBalModal');renderAll();
 }
 
@@ -1221,7 +1341,7 @@ function runSearch(){
     if(searchFilter==='income'&&tx.type!=='income')return false;
     if(searchFilter==='expense'&&tx.type!=='expense')return false;
     return [tx.desc,fmt(tx.amount),fmtDate(tx.date),String(tx.amount)].join(' ').toLowerCase().includes(q);
-  }).sort((a,b)=>new Date(b.date)-new Date(a.date)||b.createdAt-a.createdAt);
+  }).sort((a,b)=>{const n=Date.now(),da=Math.abs(new Date(a.date)-n),db=Math.abs(new Date(b.date)-n);return da-db||b.createdAt-a.createdAt;});
   document.getElementById('searchResultsLabel').textContent=res.length===0?'Nessun risultato':res.length===1?'1 risultato':res.length+' risultati';
   document.getElementById('searchResults').innerHTML=res.length===0?emptyHtml('🔍','Nessun movimento trovato',''):res.map(t=>txHtml(t,q)).join('');
 }
