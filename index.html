@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Spese">
+<meta name="theme-color" content="#0a0a14">
+<link rel="manifest" href="manifest.json">
+<title>Spese Familiari</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a14;--surface:#12121f;--card:#1a1a2e;--border:#2a2a45;--accent:#7c6af7;--green:#3ecf8e;--red:#f87171;--gold:#f5c842;--text:#f0eff8;--muted:#6b6b90;--safe:env(safe-area-inset-bottom,0px);--bank-color:#7c6af7;}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:-webkit-fill-available;overflow-x:hidden;}
+.header{position:sticky;top:0;z-index:100;background:rgba(10,10,20,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:env(safe-area-inset-top,44px) 16px 0;border-bottom:1px solid var(--border);}
+.header-inner{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px;gap:8px;}
+.app-title{font-family:'DM Serif Display',serif;font-size:17px;background:linear-gradient(135deg,var(--bank-color) 0%,#c084fc 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap;flex-shrink:0;}
+.bank-selector{appearance:none;-webkit-appearance:none;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:8px 28px 8px 10px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;outline:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6b90' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;}
+.bank-selector option{background:#1a1a2e;color:var(--text);}
+.header-actions{display:flex;gap:6px;flex-shrink:0;}
+.icon-btn{width:36px;height:36px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:17px;}
+.icon-btn:active{background:var(--border);}
+.tabs{display:flex;gap:4px;padding:10px 0;overflow-x:auto;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{flex-shrink:0;padding:7px 14px;border-radius:20px;font-size:13px;font-weight:500;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;}
+.tab.active{background:var(--bank-color);border-color:var(--bank-color);color:white;}
+.balance-section{padding:14px 16px;}
+.balance-card{background:linear-gradient(135deg,#1e1b4b 0%,#1a1a3e 50%,#0f172a 100%);border:1px solid rgba(124,106,247,0.3);border-radius:22px;padding:18px;position:relative;overflow:hidden;}
+.balance-card::before{content:'';position:absolute;top:-50px;right:-50px;width:180px;height:180px;background:radial-gradient(circle,rgba(124,106,247,0.15) 0%,transparent 70%);pointer-events:none;}
+.balance-card-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+.balance-label{font-size:11px;font-weight:500;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.date-pick-btn{background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:5px 10px;color:var(--text);font-size:12px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;gap:4px;}
+.date-pick-btn.pinned{background:rgba(124,106,247,0.25);border-color:var(--accent);color:var(--accent);}
+.balance-amount{font-family:'DM Serif Display',serif;font-size:38px;letter-spacing:-1px;line-height:1;margin-bottom:6px;}
+.balance-amount.positive{color:var(--green);}
+.balance-amount.negative{color:var(--red);}
+.balance-secondary{font-size:13px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.sec-val{font-weight:600;}
+.edit-balance-btn{background:none;border:none;cursor:pointer;font-size:13px;padding:2px;opacity:0.7;line-height:1;}
+.balance-note{font-size:11px;color:var(--muted);margin-top:3px;font-style:italic;min-height:13px;}
+.balance-row{display:flex;gap:10px;margin-top:14px;}
+.balance-stat{flex:1;background:rgba(255,255,255,0.05);border-radius:12px;padding:10px;}
+.balance-stat-label{font-size:10px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:0.8px;}
+.balance-stat-value{font-size:15px;font-weight:600;}
+.income{color:var(--green);}
+.expense{color:var(--red);}
+.datepicker-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:400;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.25s;}
+.datepicker-overlay.open{opacity:1;pointer-events:all;}
+.datepicker-sheet{width:100%;background:var(--surface);border-radius:28px 28px 0 0;border-top:1px solid var(--border);padding:20px 20px calc(24px + var(--safe));transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1);}
+.datepicker-overlay.open .datepicker-sheet{transform:translateY(0);}
+.datepicker-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.dp-month-label{font-family:'DM Serif Display',serif;font-size:18px;}
+.dp-nav{width:36px;height:36px;background:var(--card);border:1px solid var(--border);border-radius:12px;color:var(--text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;}
+.dp-weekdays{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;margin-bottom:4px;}
+.dp-weekdays span{font-size:11px;font-weight:600;color:var(--muted);padding:4px 0;}
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.dp-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:10px;font-size:14px;cursor:pointer;position:relative;border:none;background:none;color:var(--text);font-family:'DM Sans',sans-serif;}
+.dp-day:active{transform:scale(0.88);}
+.dp-day.empty{pointer-events:none;}
+.dp-day.today{background:rgba(124,106,247,0.15);color:var(--accent);font-weight:700;}
+.dp-day.selected{background:var(--accent);color:white;font-weight:700;}
+.dp-day.has-tx::after{content:'';position:absolute;bottom:3px;width:4px;height:4px;border-radius:50%;background:var(--gold);}
+.dp-day.has-tx.selected::after{background:white;}
+.dp-time-row{display:flex;align-items:center;gap:8px;padding:10px 0 0;border-top:1px solid var(--border);margin-top:10px;}
+.dp-time-label{font-size:13px;color:var(--muted);flex-shrink:0;}
+.dp-time-clear{width:32px;height:32px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;font-family:'DM Sans',sans-serif;flex-shrink:0;}
+.dp-today-btn{width:100%;margin-top:12px;padding:13px;border-radius:14px;background:var(--card);border:1px solid var(--border);color:var(--accent);font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.section-title{font-size:11px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:4px 16px 10px;}
+.transactions{padding:0 16px;display:flex;flex-direction:column;gap:8px;}
+.tx-item{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;position:relative;overflow:hidden;}
+.tx-item:active{transform:scale(0.98);}
+.tx-item.recurring::after{content:'↻';position:absolute;right:10px;top:7px;font-size:10px;color:var(--accent);opacity:0.7;}
+.tx-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.tx-icon.income-icon{background:rgba(62,207,142,0.12);}
+.tx-icon.expense-icon{background:rgba(248,113,113,0.12);}
+.tx-info{flex:1;min-width:0;}
+.tx-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}
+.tx-meta{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.tx-badge{background:rgba(124,106,247,0.15);color:var(--accent);padding:1px 6px;border-radius:20px;font-size:10px;font-weight:600;}
+.tx-amount{font-size:14px;font-weight:600;flex-shrink:0;}
+.tx-amount.pos{color:var(--green);}
+.tx-amount.neg{color:var(--red);}
+.tx-saldo{font-size:11px;color:var(--muted);text-align:right;margin-top:1px;}
+.recurring-list{padding:0 16px;display:flex;flex-direction:column;gap:8px;}
+.rec-item{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;}
+.rec-item:active{transform:scale(0.98);}
+.rec-icon{width:40px;height:40px;border-radius:12px;background:rgba(124,106,247,0.12);display:flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+.rec-icon.rec-income{background:rgba(62,207,142,0.12);}
+.rec-info{flex:1;min-width:0;}
+.rec-name{font-size:13px;font-weight:500;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rec-meta{font-size:11px;color:var(--muted);}
+.rec-freq{color:var(--accent);}
+.rec-amount{font-size:14px;font-weight:600;flex-shrink:0;}
+.rec-amount.pos{color:var(--green);}
+.rec-amount.neg{color:var(--red);}
+.stats-grid{padding:0 16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px;}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:14px;}
+.stat-card-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px;}
+.stat-card-value{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:2px;}
+.stat-card-sub{font-size:11px;color:var(--muted);}
+.category-bar{padding:0 16px;margin-bottom:8px;}
+.cat-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+.cat-item:last-child{border-bottom:none;}
+.cat-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.cat-name{flex:1;font-size:13px;}
+.cat-amount{font-size:13px;font-weight:600;color:var(--red);}
+.progress-bar-wrap{height:4px;background:var(--border);border-radius:2px;margin-top:3px;overflow:hidden;}
+.progress-bar-fill{height:100%;border-radius:2px;}
+.month-scroll{display:flex;gap:6px;padding:0 16px 12px;overflow-x:auto;scrollbar-width:none;}
+.month-scroll::-webkit-scrollbar{display:none;}
+.month-chip{flex-shrink:0;padding:6px 12px;border-radius:20px;background:var(--card);border:1px solid var(--border);font-size:12px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;}
+.month-chip.active{background:rgba(124,106,247,0.2);border-color:var(--accent);color:var(--accent);}
+.fab{position:fixed;bottom:calc(68px + var(--safe));right:16px;width:54px;height:54px;border-radius:17px;background:linear-gradient(135deg,var(--bank-color) 0%,#9b59f7 100%);border:none;color:white;font-size:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 8px 28px rgba(124,106,247,0.4);z-index:200;}
+.fab:active{transform:scale(0.92);}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(18,18,31,0.94);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:8px 0 calc(8px + var(--safe));display:flex;z-index:100;}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:var(--muted);padding:4px 0;}
+.nav-item.active{color:var(--bank-color);}
+.nav-icon{font-size:21px;}
+.nav-label{font-size:10px;font-weight:500;}
+.scroll-content{padding-bottom:calc(88px + var(--safe));}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:300;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.3s;}
+.modal-overlay.open{opacity:1;pointer-events:all;}
+.modal-sheet{width:100%;background:var(--surface);border-radius:28px 28px 0 0;padding:18px;padding-bottom:calc(22px + var(--safe));border-top:1px solid var(--border);transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.32,0.72,0,1);max-height:92vh;overflow-y:auto;}
+.modal-overlay.open .modal-sheet{transform:translateY(0);}
+.modal-handle{width:40px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 18px;}
+.modal-title{font-family:'DM Serif Display',serif;font-size:22px;margin-bottom:18px;}
+.form-group{margin-bottom:14px;}
+.form-label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:7px;display:block;}
+.form-input{width:100%;background:var(--card);border:1px solid var(--border);border-radius:13px;padding:13px 14px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;outline:none;transition:border-color 0.2s;-webkit-appearance:none;}
+.form-input:focus{border-color:var(--accent);}
+.form-input::placeholder{color:var(--muted);}
+.type-toggle{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.type-btn{padding:13px;border-radius:13px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:14px;font-weight:500;cursor:pointer;font-family:'DM Sans',sans-serif;display:flex;align-items:center;justify-content:center;gap:6px;}
+.type-btn.active-income{background:rgba(62,207,142,0.15);border-color:var(--green);color:var(--green);}
+.type-btn.active-expense{background:rgba(248,113,113,0.15);border-color:var(--red);color:var(--red);}
+.freq-select{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+.freq-btn{padding:9px 4px;border-radius:11px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;text-align:center;font-family:'DM Sans',sans-serif;}
+.freq-btn.active{background:rgba(124,106,247,0.2);border-color:var(--accent);color:var(--accent);}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:13px 14px;background:var(--card);border:1px solid var(--border);border-radius:13px;}
+.toggle-label{font-size:14px;font-weight:500;}
+.toggle-sub{font-size:12px;color:var(--muted);}
+.ios-toggle{width:51px;height:31px;background:var(--border);border-radius:15.5px;position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0;}
+.ios-toggle.on{background:var(--accent);}
+.ios-toggle::after{content:'';position:absolute;top:2px;left:2px;width:27px;height:27px;border-radius:13.5px;background:white;box-shadow:0 2px 6px rgba(0,0,0,0.3);transition:transform 0.2s cubic-bezier(0.4,0,0.2,1);}
+.ios-toggle.on::after{transform:translateX(20px);}
+.submit-btn{width:100%;padding:15px;border-radius:15px;background:linear-gradient(135deg,var(--bank-color) 0%,#9b59f7 100%);border:none;color:white;font-size:15px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;margin-top:8px;}
+.submit-btn:active{opacity:0.9;}
+.detail-row{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);}
+.detail-row:last-of-type{border-bottom:none;}
+.detail-key{font-size:13px;color:var(--muted);}
+.detail-val{font-size:14px;font-weight:500;}
+.confirm-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+.cancel-btn{padding:13px;border-radius:13px;background:var(--card);border:1px solid var(--border);color:var(--text);font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.del-btn{padding:13px;border-radius:13px;background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:var(--red);font-size:14px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif;}
+.search-sheet{max-height:90vh;}
+.search-input-wrap{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:0 12px;margin-bottom:12px;}
+.search-icon-left{font-size:17px;flex-shrink:0;}
+.search-input{flex:1;background:none;border:none;outline:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;padding:13px 0;}
+.search-input::placeholder{color:var(--muted);}
+.search-clear-btn{background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;padding:4px;font-family:'DM Sans',sans-serif;flex-shrink:0;display:none;}
+.search-filters{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap;}
+.search-filter-btn{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid var(--border);background:var(--card);color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;}
+.search-filter-btn.active{background:rgba(124,106,247,0.2);border-color:var(--accent);color:var(--accent);}
+.search-results-label{font-size:11px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;min-height:15px;}
+.search-results{padding:0;max-height:54vh;overflow-y:auto;}
+.search-highlight{background:rgba(245,200,66,0.3);border-radius:3px;padding:0 2px;}
+.page{display:none;}
+.page.active{display:block;}
+.empty-state{padding:50px 16px;text-align:center;color:var(--muted);}
+.empty-icon{font-size:44px;margin-bottom:10px;}
+.empty-text{font-size:15px;}
+.empty-sub{font-size:12px;margin-top:5px;}
+
+.sort-bar{display:flex;align-items:center;gap:6px;padding:0 16px 10px;overflow-x:auto;scrollbar-width:none;}
+.sort-bar::-webkit-scrollbar{display:none;}
+.sort-label{font-size:11px;color:var(--muted);flex-shrink:0;font-weight:600;text-transform:uppercase;}
+.sort-btn{flex-shrink:0;padding:5px 10px;border-radius:16px;background:var(--card);border:1px solid var(--border);font-size:12px;color:var(--muted);cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;}
+.sort-btn.active{background:rgba(124,106,247,0.2);border-color:var(--bank-color);color:var(--bank-color);}
+
+.animate-in{animation:slideUp 0.3s ease both;}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-inner">
+    <div class="app-title" id="appTitle">🏦 FINECO</div>
+    <select class="bank-selector" id="bankSelector" onchange="switchBank(this.value)">
+      <option value="fineco">🏦 FINECO</option>
+      <option value="bbva">🏦 BBVA</option>
+    </select>
+    <div class="header-actions">
+      <button class="icon-btn" id="searchBtn">🔍</button>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab(this,'home')">Dashboard</button>
+    <button class="tab" onclick="switchTab(this,'movements')">Movimenti</button>
+    <button class="tab" onclick="switchTab(this,'recurring')">Ricorrenti</button>
+    <button class="tab" id="tab-cards" onclick="switchTab(this,'cards')" style="display:none">&#128179; Carte</button>
+    <button class="tab" onclick="switchTab(this,'stats')">Statistiche</button>
+  </div>
+</div>
+
+<div id="page-home" class="page active scroll-content">
+  <div class="balance-section">
+    <div class="balance-card">
+      <div class="balance-card-top">
+        <div class="balance-label" id="balanceLabel">Saldo FINECO</div>
+        <button class="date-pick-btn" id="datePickBtn" onclick="openDatePicker()"><span id="datePickLabel">Oggi</span> 📅</button>
+      </div>
+      <div class="balance-amount positive" id="mainBalance">€0,00</div>
+      <div class="balance-secondary">
+        <span id="secondaryLabel">Saldo reale:</span>
+        <span class="sec-val" id="realBalance">€0,00</span>
+        <button class="edit-balance-btn" onclick="openEditBalance()">✏️</button>
+      </div>
+      <div id="balanceNote" class="balance-note"></div>
+      <div class="balance-row">
+        <div class="balance-stat"><div class="balance-stat-label">Entrate mese</div><div class="balance-stat-value income" id="monthIncome">€0</div></div>
+        <div class="balance-stat"><div class="balance-stat-label">Uscite mese</div><div class="balance-stat-value expense" id="monthExpense">€0</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="datepicker-overlay" id="datepickerOverlay" onclick="closeDatePickerBg(event)">
+    <div class="datepicker-sheet">
+      <div class="datepicker-header">
+        <button class="dp-nav" onclick="dpChangeMonth(-1)">&#8249;</button>
+        <div class="dp-month-label" id="dpMonthLabel"></div>
+        <button class="dp-nav" onclick="dpChangeMonth(1)">&#8250;</button>
+      </div>
+      <div class="dp-weekdays"><span>Lu</span><span>Ma</span><span>Me</span><span>Gi</span><span>Ve</span><span>Sa</span><span>Do</span></div>
+      <div class="dp-grid" id="dpGrid"></div>
+      <div class="dp-time-row">
+        <span class="dp-time-label">Ora esatta:</span>
+        <input type="time" class="form-input" id="dpTimeInput" style="flex:1;padding:9px 12px;font-size:15px" value="23:59">
+        <button class="dp-time-clear" onclick="clearDpTime()">&#10005;</button>
+      </div>
+      <button class="dp-today-btn" onclick="resetToToday()">Torna ad oggi</button>
+    </div>
+  </div>
+  <div class="section-title" id="homeListTitle">Movimenti recenti</div>
+  <div class="transactions" id="recentTransactions"></div>
+</div>
+
+<div id="page-movements" class="page scroll-content">
+  <div class="month-scroll" id="monthFilter"></div>
+  <div class="sort-bar">
+    <span class="sort-label">Ordina:</span>
+    <button class="sort-btn active" id="sort-date-desc" onclick="setSortOrder('date-desc',this)">&#128197; Recenti</button>
+    <button class="sort-btn" id="sort-date-asc" onclick="setSortOrder('date-asc',this)">&#128197; Meno recenti</button>
+    <button class="sort-btn" id="sort-amount-desc" onclick="setSortOrder('amount-desc',this)">&#8364; &#9660;</button>
+    <button class="sort-btn" id="sort-amount-asc" onclick="setSortOrder('amount-asc',this)">&#8364; &#9650;</button>
+  </div>
+  <div class="section-title" id="movListTitle">Tutti i movimenti</div>
+  <div class="transactions" id="allTransactions"></div>
+</div>
+
+<div id="page-recurring" class="page scroll-content">
+  <div class="balance-section" style="padding-top:14px">
+    <div class="balance-card">
+      <div class="balance-label">Uscite Ricorrenti / mese</div>
+      <div class="balance-amount" style="font-size:32px" id="recTotalOut">€0</div>
+      <div class="balance-row">
+        <div class="balance-stat"><div class="balance-stat-label">Entrate fisse</div><div class="balance-stat-value income" id="recTotalIn">€0</div></div>
+        <div class="balance-stat"><div class="balance-stat-label">Saldo ricorrente</div><div class="balance-stat-value" id="recBalance">€0</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="section-title">Spese &amp; entrate periodiche</div>
+  <div class="recurring-list" id="recurringList"></div>
+</div>
+
+<div id="page-cards" class="page scroll-content">
+  <div style="height:14px"></div>
+  <div class="section-title">&#128179; Carta di Credito Fausto</div>
+  <div class="balance-section" style="padding-top:0">
+    <div class="balance-card" id="cardFaustoCard" style="border-color:rgba(124,106,247,0.5)">
+      <div class="balance-card-top">
+        <div class="balance-label" id="cardFaustoLabel">ADDEBITO AL 10/05</div>
+        <button class="edit-balance-btn" onclick="openEditCard('fausto')">&#9999;&#65039;</button>
+      </div>
+      <div class="balance-amount positive" id="cardFaustoAddebito">€0,00</div>
+      <div class="balance-secondary"><span style="color:var(--muted)">Residuo plafond:</span><span class="sec-val" id="cardFaustoPlafond" style="color:var(--green)">€0,00</span></div>
+      <div class="balance-row">
+        <div class="balance-stat"><div class="balance-stat-label">A Saldo</div><div class="balance-stat-value" id="cardFaustoSaldo">€0</div></div>
+        <div class="balance-stat"><div class="balance-stat-label">Prelievo</div><div class="balance-stat-value" id="cardFaustoPrelievo">€0</div></div>
+        <div class="balance-stat"><div class="balance-stat-label">A Rate</div><div class="balance-stat-value" id="cardFaustoRate">€0</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="section-title" style="margin-top:6px">&#128179; Carta di Credito Laura</div>
+  <div class="balance-section" style="padding-top:0">
+    <div class="balance-card" id="cardLauraCard" style="border-color:rgba(232,93,138,0.5)">
+      <div class="balance-card-top">
+        <div class="balance-label" id="cardLauraLabel">ADDEBITO AL 10/05</div>
+        <button class="edit-balance-btn" onclick="openEditCard('laura')">&#9999;&#65039;</button>
+      </div>
+      <div class="balance-amount positive" id="cardLauraAddebito">€0,00</div>
+      <div class="balance-secondary"><span style="color:var(--muted)">Residuo plafond:</span><span class="sec-val" id="cardLauraPlafond" style="color:var(--green)">€0,00</span></div>
+      <div class="balance-row">
+        <div class="balance-stat"><div class="balance-stat-label">A Saldo</div><div class="balance-stat-value" id="cardLauraSaldo">€0</div></div>
+        <div class="balance-stat"><div class="balance-stat-label">Prelievo</div><div class="balance-stat-value" id="cardLauraPrelievo">€0</div></div>
+        <div class="balance-stat"><div class="balance-stat-label">A Rate</div><div class="balance-stat-value" id="cardLauraRate">€0</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="section-title" style="margin-top:6px">&#8721; Totale da addebitare</div>
+  <div class="balance-section" style="padding-top:0">
+    <div class="balance-card">
+      <div class="balance-label">PROSSIMO ADDEBITO COMBINATO</div>
+      <div class="balance-amount positive" id="cardTotaleAddebito" style="font-size:32px">€0,00</div>
+      <div class="balance-secondary"><span style="color:var(--muted)">Plafond residuo totale:</span><span class="sec-val" id="cardTotalePlafond" style="color:var(--green)">€0,00</span></div>
+    </div>
+  </div>
+</div>
+
+<div id="page-stats" class="page scroll-content">
+  <div style="height:14px"></div>
+  <div class="stats-grid" id="statsGrid"></div>
+  <div class="section-title">Categorie principali (mese corrente)</div>
+  <div class="category-bar" id="categoryBar"></div>
+</div>
+
+<button class="fab" id="fabBtn">+</button>
+
+<div class="bottom-nav">
+  <div class="nav-item active" id="nav-home" onclick="switchNav('home')"><div class="nav-icon">&#127968;</div><div class="nav-label">Home</div></div>
+  <div class="nav-item" id="nav-movements" onclick="switchNav('movements')"><div class="nav-icon">&#128203;</div><div class="nav-label">Movimenti</div></div>
+  <div class="nav-item" id="nav-recurring" onclick="switchNav('recurring')"><div class="nav-icon">&#128260;</div><div class="nav-label">Ricorrenti</div></div>
+  <div class="nav-item" id="nav-cards" onclick="switchNav('cards')" style="display:none"><div class="nav-icon">&#128179;</div><div class="nav-label">Carte</div></div>
+  <div class="nav-item" id="nav-stats" onclick="switchNav('stats')"><div class="nav-icon">&#128202;</div><div class="nav-label">Statistiche</div></div>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-overlay" id="addModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="addModalTitle">Nuovo Movimento</div>
+    <div class="form-group"><label class="form-label">Tipo</label>
+      <div class="type-toggle">
+        <button class="type-btn active-expense" id="btnExpense" onclick="setType('expense')">&#128228; Uscita</button>
+        <button class="type-btn" id="btnIncome" onclick="setType('income')">&#128229; Entrata</button>
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Importo (&#8364;)</label>
+      <input type="number" class="form-input" id="inputAmount" placeholder="0,00" inputmode="decimal" step="0.01" min="0"></div>
+    <div class="form-group"><label class="form-label">Causale</label>
+      <input type="text" class="form-input" id="inputDesc" placeholder="es. Mutuo, Stipendio&#8230;"></div>
+    <div class="form-group"><label class="form-label">Data e Ora</label>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:8px">
+        <input type="date" class="form-input" id="inputDate">
+        <input type="time" class="form-input" id="inputTime" style="width:108px" value="00:00">
+      </div>
+    </div>
+    <div class="form-group"><label class="form-label">Ricorrente?</label>
+      <div class="toggle-row">
+        <div><div class="toggle-label">Ripetizione automatica</div><div class="toggle-sub">Aggiunge ogni mese</div></div>
+        <div class="ios-toggle" id="recurringToggle" onclick="toggleRecurring()"></div>
+      </div>
+    </div>
+    <div id="freqGroup" style="display:none" class="form-group">
+      <label class="form-label">Frequenza</label>
+      <div class="freq-select">
+        <button class="freq-btn active" onclick="setFreq(this,'monthly')">Mensile</button>
+        <button class="freq-btn" onclick="setFreq(this,'bimonthly')">Bimestrale</button>
+        <button class="freq-btn" onclick="setFreq(this,'quarterly')">Trimestrale</button>
+        <button class="freq-btn" onclick="setFreq(this,'yearly')">Annuale</button>
+        <button class="freq-btn" onclick="setFreq(this,'weekly')">Settimanale</button>
+        <button class="freq-btn" onclick="setFreq(this,'custom')">Personalizzata</button>
+      </div>
+      <input type="number" class="form-input" id="freqDayInput" placeholder="Giorno del mese (es. 15)" style="margin-top:8px" inputmode="numeric" min="1" max="31">
+    </div>
+    <button class="submit-btn" onclick="saveTransaction()">Salva Movimento</button>
+  </div>
+</div>
+
+<!-- EDIT BALANCE MODAL -->
+<div class="modal-overlay" id="editBalModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="editBalTitle">Modifica Saldo</div>
+    <div class="form-group">
+      <label class="form-label" id="editBalMainLabel">Saldo principale (&#8364;)</label>
+      <input type="number" class="form-input" id="editBalMain" inputmode="decimal" step="0.01" placeholder="0,00">
+    </div>
+    <div class="form-group" id="editBalSecGroup">
+      <label class="form-label" id="editBalSecLabel">Saldo secondario (&#8364;)</label>
+      <input type="number" class="form-input" id="editBalSec" inputmode="decimal" step="0.01" placeholder="0,00">
+    </div>
+    <button class="submit-btn" onclick="saveEditBalance()">Aggiorna Saldo</button>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="detailTitle"></div>
+    <div id="detailContent"></div>
+    <div class="confirm-btns">
+      <button class="cancel-btn" id="editTxBtn" onclick="editTransaction()">&#9999;&#65039; Modifica</button>
+      <button class="del-btn" id="delBtn" onclick="deleteTransaction()">&#128465; Elimina</button>
+    </div>
+  </div>
+</div>
+
+<!-- SEARCH MODAL -->
+<div class="modal-overlay" id="searchModal" onclick="closeSearchOnBg(event)">
+  <div class="modal-sheet search-sheet">
+    <div class="modal-handle"></div>
+    <div class="search-input-wrap">
+      <span class="search-icon-left">&#128269;</span>
+      <input type="text" class="search-input" id="searchInput" placeholder="Cerca causale, importo, data&#8230;" autocomplete="off" oninput="runSearch()">
+      <button class="search-clear-btn" id="searchClearBtn" onclick="clearSearch()">&#10005;</button>
+    </div>
+    <div class="search-filters">
+      <button class="search-filter-btn active" id="sf-all" onclick="setSearchFilter('all',this)">Tutti</button>
+      <button class="search-filter-btn" id="sf-in" onclick="setSearchFilter('income',this)">&#128229; Entrate</button>
+      <button class="search-filter-btn" id="sf-out" onclick="setSearchFilter('expense',this)">&#128228; Uscite</button>
+    </div>
+    <div class="search-results-label" id="searchResultsLabel"></div>
+    <div class="transactions search-results" id="searchResults"></div>
+  </div>
+</div>
+
+<!-- EDIT CARD MODAL -->
+<div class="modal-overlay" id="editCardModal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="editCardTitle">Modifica Carta</div>
+    <div class="form-group"><label class="form-label">A Saldo (&#8364;)</label><input type="number" class="form-input" id="editCardSaldo" inputmode="decimal" step="0.01" placeholder="0,00"></div>
+    <div class="form-group"><label class="form-label">Prelievo (&#8364;)</label><input type="number" class="form-input" id="editCardPrelievo" inputmode="decimal" step="0.01" placeholder="0,00"></div>
+    <div class="form-group"><label class="form-label">A Rate (&#8364;)</label><input type="number" class="form-input" id="editCardRate" inputmode="decimal" step="0.01" placeholder="0,00"></div>
+    <div class="form-group"><label class="form-label">Residuo Plafond (&#8364;)</label><input type="number" class="form-input" id="editCardPlafond" inputmode="decimal" step="0.01" placeholder="0,00"></div>
+    <div class="form-group"><label class="form-label">Data addebito (es. 10/06)</label><input type="text" class="form-input" id="editCardDataAddebito" placeholder="10/05"></div>
+    <button class="submit-btn" onclick="saveEditCard()">Aggiorna Carta</button>
+  </div>
+</div>
+
+<script>
+// ── BANK CONFIG ──────────────────────────────────────────────────────────────
+const BANKS={
+  fineco:{name:'FINECO',color:'#7c6af7',secLabel:'Saldo reale',secType:'reserve'},
+  bbva:  {name:'BBVA',  color:'#e85d8a',secLabel:'Saldo Salvadanaio',secType:'freeform'}
+};
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+let currentBank='fineco';
+const bankData={
+  fineco:{transactions:[],recurring:[],reserve:3000,salvadanaio:0,
+    cards:{fausto:{saldo:374.9,prelievo:0,rate:0,plafond:2225.1,dataAddebito:'10/05'},laura:{saldo:403.5,prelievo:0,rate:0,plafond:2196.5,dataAddebito:'10/05'}}
+  },
+  bbva:{transactions:[],recurring:[],reserve:0,salvadanaio:6508.96,cards:null}
+};
+let editingCard=null;
+let currentType='expense',isRecurring=false,currentFreq='monthly';
+let editingId=null,activeMonthFilter=null,currentDetailId=null;
+let dashDate=null,dpSelectedTime='';
+let dpViewYear=new Date().getFullYear(),dpViewMonth=new Date().getMonth();
+let searchFilter='all';
+let movSortOrder='date-desc';
+
+const FL={monthly:'Mensile',bimonthly:'Bimestrale',quarterly:'Trimestrale',yearly:'Annuale',weekly:'Settimanale',custom:'Personalizzata'};
+const CI={'mutuo':'🏠','stipendio':'💼','carta di credito':'💳','fastweb':'📡','assegno unico':'👶','finanziamento':'💰','telepass':'🚗','polizze':'🛡️','soldi':'💵','infissi':'🪟','dentista':'🦷','scuola':'📚','sport':'⚽','medic':'🏥','farmaci':'💊','spese cond':'🏢','assicuraz':'📜','luce':'⚡','gas':'🔥','ristorante':'🍽️','supermercato':'🛒','netflix':'🎬','prime':'📦','hbo':'🎭','disney':'🏰','apple':'🍎','icloud':'☁️','ho mobile':'📱','now':'📺','salvadanaio':'🐷','trasferimento':'↔️','rata':'💳','purificatore':'💧','default':'💳'};
+function getIcon(d){const s=(d||'').toLowerCase();for(const[k,v]of Object.entries(CI)){if(s.includes(k))return v;}return CI.default;}
+function bd(){return bankData[currentBank];}
+function bcfg(){return BANKS[currentBank];}
+function txs(){return bd().transactions;}
+function recs(){return bd().recurring;}
+
+// ── STORAGE ──────────────────────────────────────────────────────────────────
+function save(){try{localStorage.setItem('fam_v3',JSON.stringify(bankData));}catch(e){}}
+function load(){
+  try{
+    const r=localStorage.getItem('fam_v3');
+    if(r){const s=JSON.parse(r);['fineco','bbva'].forEach(b=>{if(s[b]){bankData[b].transactions=s[b].transactions||[];bankData[b].recurring=s[b].recurring||[];bankData[b].reserve=s[b].reserve??bankData[b].reserve;bankData[b].salvadanaio=s[b].salvadanaio??bankData[b].salvadanaio;
+          if(b==='fineco'&&s[b].cards){bankData.fineco.cards.fausto=s[b].cards.fausto??bankData.fineco.cards.fausto;bankData.fineco.cards.laura=s[b].cards.laura??bankData.fineco.cards.laura;}}});}
+  }catch(e){}
+  if(bankData.fineco.transactions.length===0)seedFineco();
+  if(bankData.bbva.transactions.length===0)seedBbva();
+}
+function seedFineco(){
+  const t=Date.now(),n=255;
+  bankData.fineco.transactions=[
+  {id:'f0',bank:'fineco',date:'2026-04-07T00:00:00',amount:5060.42,type:'income',desc:'Saldo iniziale',balance:5060.42,realBalance:-403.47,isInitial:true,recurring:false,createdAt:t-(n-0)*1000},
+  {id:'f1',bank:'fineco',date:'2026-04-10T00:00:00',amount:16,type:'expense',desc:'Arturo',balance:5044.42,realBalance:2044.42,isInitial:false,recurring:false,createdAt:t-(n-1)*1000},
+  {id:'f2',bank:'fineco',date:'2026-04-10T00:00:00',amount:759.91,type:'expense',desc:'Carta di credito Fausto',balance:4284.51,realBalance:1284.51,isInitial:false,recurring:false,createdAt:t-(n-2)*1000},
+  {id:'f3',bank:'fineco',date:'2026-04-10T00:00:00',amount:940.03,type:'expense',desc:'Carta di credito Laura',balance:3344.48,realBalance:344.48,isInitial:false,recurring:false,createdAt:t-(n-3)*1000},
+  {id:'f4',bank:'fineco',date:'2026-04-15T00:00:00',amount:747.95,type:'expense',desc:'Mutuo',balance:2596.53,realBalance:-403.47,isInitial:false,recurring:false,createdAt:t-(n-4)*1000},
+  {id:'f5',bank:'fineco',date:'2026-04-20T00:00:00',amount:65,type:'expense',desc:'Visita Oculistica Maya',balance:2531.53,realBalance:-468.47,isInitial:false,recurring:false,createdAt:t-(n-5)*1000},
+  {id:'f6',bank:'fineco',date:'2026-04-21T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Fausto',balance:2725.83,realBalance:-274.17,isInitial:false,recurring:false,createdAt:t-(n-6)*1000},
+  {id:'f7',bank:'fineco',date:'2026-04-21T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Laura',balance:2920.13,realBalance:-79.87,isInitial:false,recurring:false,createdAt:t-(n-7)*1000},
+  {id:'f8',bank:'fineco',date:'2026-04-25T00:00:00',amount:24.95,type:'expense',desc:'Fastweb',balance:2895.18,realBalance:-104.82,isInitial:false,recurring:false,createdAt:t-(n-8)*1000},
+  {id:'f9',bank:'fineco',date:'2026-04-27T00:00:00',amount:2850,type:'income',desc:'Stipendio Fausto',balance:5745.18,realBalance:2745.18,isInitial:false,recurring:false,createdAt:t-(n-9)*1000},
+  {id:'f10',bank:'fineco',date:'2026-04-28T00:00:00',amount:10,type:'expense',desc:'Soldi Jacopo',balance:5735.18,realBalance:2735.18,isInitial:false,recurring:false,createdAt:t-(n-10)*1000},
+  {id:'f11',bank:'fineco',date:'2026-04-28T00:00:00',amount:1620,type:'income',desc:'Stipendio Laura',balance:7355.18,realBalance:4355.18,isInitial:false,recurring:false,createdAt:t-(n-11)*1000},
+  {id:'f12',bank:'fineco',date:'2026-04-29T00:00:00',amount:120,type:'expense',desc:'Daba',balance:7235.18,realBalance:4235.18,isInitial:false,recurring:false,createdAt:t-(n-12)*1000},
+  {id:'f13',bank:'fineco',date:'2026-04-29T00:00:00',amount:105,type:'expense',desc:'BBVA',balance:7130.18,realBalance:4130.18,isInitial:false,recurring:false,createdAt:t-(n-13)*1000},
+  {id:'f14',bank:'fineco',date:'2026-04-29T00:00:00',amount:86,type:'expense',desc:'Polizze Unicredit',balance:7044.18,realBalance:4044.18,isInitial:false,recurring:false,createdAt:t-(n-14)*1000},
+  {id:'f15',bank:'fineco',date:'2026-04-29T00:00:00',amount:70,type:'expense',desc:'Soldi Rebecca',balance:6974.18,realBalance:3974.18,isInitial:false,recurring:false,createdAt:t-(n-15)*1000},
+  {id:'f16',bank:'fineco',date:'2026-04-30T00:00:00',amount:311.73,type:'expense',desc:'Finanziamento Macchina',balance:6662.45,realBalance:3662.45,isInitial:false,recurring:false,createdAt:t-(n-16)*1000},
+  {id:'f17',bank:'fineco',date:'2026-04-30T00:00:00',amount:145,type:'expense',desc:'Spese Scolastiche Jacopo/Rebecca',balance:6517.45,realBalance:3517.45,isInitial:false,recurring:false,createdAt:t-(n-17)*1000},
+  {id:'f18',bank:'fineco',date:'2026-04-30T00:00:00',amount:73.5,type:'expense',desc:'Telepass + ATM',balance:6443.95,realBalance:3443.95,isInitial:false,recurring:false,createdAt:t-(n-18)*1000},
+  {id:'f19',bank:'fineco',date:'2026-05-01T00:00:00',amount:424.26,type:'expense',desc:'Finanziamento Ristrutturazione',balance:6019.69,realBalance:3019.69,isInitial:false,recurring:false,createdAt:t-(n-19)*1000},
+  {id:'f20',bank:'fineco',date:'2026-05-02T00:00:00',amount:20.99,type:'expense',desc:'Estensione Garanzia Lavatrice',balance:5998.7,realBalance:2998.7,isInitial:false,recurring:false,createdAt:t-(n-20)*1000},
+  {id:'f21',bank:'fineco',date:'2026-05-05T00:00:00',amount:16,type:'expense',desc:'Arturo',balance:5982.7,realBalance:2982.7,isInitial:false,recurring:false,createdAt:t-(n-21)*1000},
+  {id:'f22',bank:'fineco',date:'2026-05-05T00:00:00',amount:135.22,type:'expense',desc:'Infissi',balance:5847.48,realBalance:2847.48,isInitial:false,recurring:false,createdAt:t-(n-22)*1000},
+  {id:'f23',bank:'fineco',date:'2026-05-05T00:00:00',amount:69.02,type:'expense',desc:'Prestito Fineco',balance:5778.46,realBalance:2778.46,isInitial:false,recurring:false,createdAt:t-(n-23)*1000},
+  {id:'f24',bank:'fineco',date:'2026-05-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Fausto',balance:5078.46,realBalance:2078.46,isInitial:false,recurring:false,createdAt:t-(n-24)*1000},
+  {id:'f25',bank:'fineco',date:'2026-05-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Laura',balance:4378.46,realBalance:1378.46,isInitial:false,recurring:false,createdAt:t-(n-25)*1000},
+  {id:'f26',bank:'fineco',date:'2026-05-15T00:00:00',amount:747.95,type:'expense',desc:'Mutuo',balance:3630.51,realBalance:630.51,isInitial:false,recurring:false,createdAt:t-(n-26)*1000},
+  {id:'f27',bank:'fineco',date:'2026-05-21T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Fausto',balance:3824.81,realBalance:824.81,isInitial:false,recurring:false,createdAt:t-(n-27)*1000},
+  {id:'f28',bank:'fineco',date:'2026-05-21T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Laura',balance:4019.11,realBalance:1019.11,isInitial:false,recurring:false,createdAt:t-(n-28)*1000},
+  {id:'f29',bank:'fineco',date:'2026-05-25T00:00:00',amount:24.95,type:'expense',desc:'Fastweb',balance:3994.16,realBalance:994.16,isInitial:false,recurring:false,createdAt:t-(n-29)*1000},
+  {id:'f30',bank:'fineco',date:'2026-05-27T00:00:00',amount:2500,type:'income',desc:'Stipendio Fausto',balance:6494.16,realBalance:3494.16,isInitial:false,recurring:false,createdAt:t-(n-30)*1000},
+  {id:'f31',bank:'fineco',date:'2026-05-28T00:00:00',amount:10,type:'expense',desc:'Soldi Jacopo',balance:6484.16,realBalance:3484.16,isInitial:false,recurring:false,createdAt:t-(n-31)*1000},
+  {id:'f32',bank:'fineco',date:'2026-05-28T00:00:00',amount:1620,type:'income',desc:'Stipendio Laura',balance:8104.16,realBalance:5104.16,isInitial:false,recurring:false,createdAt:t-(n-32)*1000},
+  {id:'f33',bank:'fineco',date:'2026-05-29T00:00:00',amount:105,type:'expense',desc:'BBVA',balance:7999.16,realBalance:4999.16,isInitial:false,recurring:false,createdAt:t-(n-33)*1000},
+  {id:'f34',bank:'fineco',date:'2026-05-29T00:00:00',amount:143,type:'expense',desc:'Nuoto Jacopo',balance:7856.16,realBalance:4856.16,isInitial:false,recurring:false,createdAt:t-(n-34)*1000},
+  {id:'f35',bank:'fineco',date:'2026-05-29T00:00:00',amount:86,type:'expense',desc:'Polizze Unicredit',balance:7770.16,realBalance:4770.16,isInitial:false,recurring:false,createdAt:t-(n-35)*1000},
+  {id:'f36',bank:'fineco',date:'2026-05-29T00:00:00',amount:70,type:'expense',desc:'Soldi Rebecca',balance:7700.16,realBalance:4700.16,isInitial:false,recurring:false,createdAt:t-(n-36)*1000},
+  {id:'f37',bank:'fineco',date:'2026-05-30T00:00:00',amount:311.73,type:'expense',desc:'Finanziamento Macchina',balance:7388.43,realBalance:4388.43,isInitial:false,recurring:false,createdAt:t-(n-37)*1000},
+  {id:'f38',bank:'fineco',date:'2026-05-30T00:00:00',amount:73.5,type:'expense',desc:'Telepass + ATM',balance:7314.93,realBalance:4314.93,isInitial:false,recurring:false,createdAt:t-(n-38)*1000},
+  {id:'f39',bank:'fineco',date:'2026-06-01T00:00:00',amount:424.26,type:'expense',desc:'Finanziamento Ristrutturazione',balance:6890.67,realBalance:3890.67,isInitial:false,recurring:false,createdAt:t-(n-39)*1000},
+  {id:'f40',bank:'fineco',date:'2026-06-02T00:00:00',amount:20.99,type:'expense',desc:'Estensione Garanzia Lavatrice',balance:6869.68,realBalance:3869.68,isInitial:false,recurring:false,createdAt:t-(n-40)*1000},
+  {id:'f41',bank:'fineco',date:'2026-06-05T00:00:00',amount:16,type:'expense',desc:'Arturo',balance:6853.68,realBalance:3853.68,isInitial:false,recurring:false,createdAt:t-(n-41)*1000},
+  {id:'f42',bank:'fineco',date:'2026-06-05T00:00:00',amount:135.22,type:'expense',desc:'Infissi',balance:6718.46,realBalance:3718.46,isInitial:false,recurring:false,createdAt:t-(n-42)*1000},
+  {id:'f43',bank:'fineco',date:'2026-06-05T00:00:00',amount:69.02,type:'expense',desc:'Prestito Fineco',balance:6649.44,realBalance:3649.44,isInitial:false,recurring:false,createdAt:t-(n-43)*1000},
+  {id:'f44',bank:'fineco',date:'2026-06-07T00:00:00',amount:332.91,type:'expense',desc:'Luce e Gas ENI',balance:6316.53,realBalance:3316.53,isInitial:false,recurring:false,createdAt:t-(n-44)*1000},
+  {id:'f45',bank:'fineco',date:'2026-06-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Fausto',balance:5616.53,realBalance:2616.53,isInitial:false,recurring:false,createdAt:t-(n-45)*1000},
+  {id:'f46',bank:'fineco',date:'2026-06-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Laura',balance:4916.53,realBalance:1916.53,isInitial:false,recurring:false,createdAt:t-(n-46)*1000},
+  {id:'f47',bank:'fineco',date:'2026-06-15T00:00:00',amount:2545,type:'income',desc:'14esima Fausto',balance:7461.53,realBalance:4461.53,isInitial:false,recurring:false,createdAt:t-(n-47)*1000},
+  {id:'f48',bank:'fineco',date:'2026-06-15T00:00:00',amount:747.95,type:'expense',desc:'Mutuo',balance:6713.58,realBalance:3713.58,isInitial:false,recurring:false,createdAt:t-(n-48)*1000},
+  {id:'f49',bank:'fineco',date:'2026-06-17T00:00:00',amount:50,type:'expense',desc:'Acconto Volley Rebecca',balance:6663.58,realBalance:3663.58,isInitial:false,recurring:false,createdAt:t-(n-49)*1000},
+  {id:'f50',bank:'fineco',date:'2026-06-19T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Fausto',balance:6857.88,realBalance:3857.88,isInitial:false,recurring:false,createdAt:t-(n-50)*1000},
+  {id:'f51',bank:'fineco',date:'2026-06-19T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Laura',balance:7052.18,realBalance:4052.18,isInitial:false,recurring:false,createdAt:t-(n-51)*1000},
+  {id:'f52',bank:'fineco',date:'2026-06-25T00:00:00',amount:24.95,type:'expense',desc:'Fastweb',balance:7027.23,realBalance:4027.23,isInitial:false,recurring:false,createdAt:t-(n-52)*1000},
+  {id:'f53',bank:'fineco',date:'2026-06-26T00:00:00',amount:2500,type:'income',desc:'Stipendio Fausto',balance:9527.23,realBalance:6527.23,isInitial:false,recurring:false,createdAt:t-(n-53)*1000},
+  {id:'f54',bank:'fineco',date:'2026-06-28T00:00:00',amount:10,type:'expense',desc:'Soldi Jacopo',balance:9517.23,realBalance:6517.23,isInitial:false,recurring:false,createdAt:t-(n-54)*1000},
+  {id:'f55',bank:'fineco',date:'2026-06-29T00:00:00',amount:105,type:'expense',desc:'BBVA',balance:9412.23,realBalance:6412.23,isInitial:false,recurring:false,createdAt:t-(n-55)*1000},
+  {id:'f56',bank:'fineco',date:'2026-06-29T00:00:00',amount:86,type:'expense',desc:'Polizze Unicredit',balance:9326.23,realBalance:6326.23,isInitial:false,recurring:false,createdAt:t-(n-56)*1000},
+  {id:'f57',bank:'fineco',date:'2026-06-29T00:00:00',amount:70,type:'expense',desc:'Soldi Rebecca',balance:9256.23,realBalance:6256.23,isInitial:false,recurring:false,createdAt:t-(n-57)*1000},
+  {id:'f58',bank:'fineco',date:'2026-06-29T00:00:00',amount:1620,type:'income',desc:'Stipendio Laura',balance:10876.23,realBalance:7876.23,isInitial:false,recurring:false,createdAt:t-(n-58)*1000},
+  {id:'f59',bank:'fineco',date:'2026-06-30T00:00:00',amount:311.73,type:'expense',desc:'Finanziamento Macchina',balance:10564.5,realBalance:7564.5,isInitial:false,recurring:false,createdAt:t-(n-59)*1000},
+  {id:'f60',bank:'fineco',date:'2026-06-30T00:00:00',amount:73.5,type:'expense',desc:'Telepass + ATM',balance:10491,realBalance:7491,isInitial:false,recurring:false,createdAt:t-(n-60)*1000},
+  {id:'f61',bank:'fineco',date:'2026-07-01T00:00:00',amount:424.26,type:'expense',desc:'Finanziamento Ristrutturazione',balance:10066.74,realBalance:7066.74,isInitial:false,recurring:false,createdAt:t-(n-61)*1000},
+  {id:'f62',bank:'fineco',date:'2026-07-02T00:00:00',amount:20.99,type:'expense',desc:'Estensione Garanzia Lavatrice',balance:10045.75,realBalance:7045.75,isInitial:false,recurring:false,createdAt:t-(n-62)*1000},
+  {id:'f63',bank:'fineco',date:'2026-07-05T00:00:00',amount:16,type:'expense',desc:'Arturo',balance:10029.75,realBalance:7029.75,isInitial:false,recurring:false,createdAt:t-(n-63)*1000},
+  {id:'f64',bank:'fineco',date:'2026-07-05T00:00:00',amount:135.22,type:'expense',desc:'Infissi',balance:9894.53,realBalance:6894.53,isInitial:false,recurring:false,createdAt:t-(n-64)*1000},
+  {id:'f65',bank:'fineco',date:'2026-07-05T00:00:00',amount:69.02,type:'expense',desc:'Prestito Fineco',balance:9825.51,realBalance:6825.51,isInitial:false,recurring:false,createdAt:t-(n-65)*1000},
+  {id:'f66',bank:'fineco',date:'2026-07-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Fausto',balance:9125.51,realBalance:6125.51,isInitial:false,recurring:false,createdAt:t-(n-66)*1000},
+  {id:'f67',bank:'fineco',date:'2026-07-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Laura',balance:8425.51,realBalance:5425.51,isInitial:false,recurring:false,createdAt:t-(n-67)*1000},
+  {id:'f68',bank:'fineco',date:'2026-07-13T00:00:00',amount:1359,type:'income',desc:'14esima Laura',balance:9784.51,realBalance:6784.51,isInitial:false,recurring:false,createdAt:t-(n-68)*1000},
+  {id:'f69',bank:'fineco',date:'2026-07-15T00:00:00',amount:747.95,type:'expense',desc:'Mutuo',balance:9036.56,realBalance:6036.56,isInitial:false,recurring:false,createdAt:t-(n-69)*1000},
+  {id:'f70',bank:'fineco',date:'2026-07-16T00:00:00',amount:10.7,type:'expense',desc:'Dentista Fausto (Pulizia+Visita)',balance:9025.86,realBalance:6025.86,isInitial:false,recurring:false,createdAt:t-(n-70)*1000},
+  {id:'f71',bank:'fineco',date:'2026-07-16T00:00:00',amount:10.7,type:'expense',desc:'Dentista Laura (Pulizia+Visita)',balance:9015.16,realBalance:6015.16,isInitial:false,recurring:false,createdAt:t-(n-71)*1000},
+  {id:'f72',bank:'fineco',date:'2026-07-16T00:00:00',amount:92,type:'expense',desc:'Dentista Rebecca (Pulizia+Visita)',balance:8923.16,realBalance:5923.16,isInitial:false,recurring:false,createdAt:t-(n-72)*1000},
+  {id:'f73',bank:'fineco',date:'2026-07-21T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Fausto',balance:9117.46,realBalance:6117.46,isInitial:false,recurring:false,createdAt:t-(n-73)*1000},
+  {id:'f74',bank:'fineco',date:'2026-07-21T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Laura',balance:9311.76,realBalance:6311.76,isInitial:false,recurring:false,createdAt:t-(n-74)*1000},
+  {id:'f75',bank:'fineco',date:'2026-07-25T00:00:00',amount:24.95,type:'expense',desc:'Fastweb',balance:9286.81,realBalance:6286.81,isInitial:false,recurring:false,createdAt:t-(n-75)*1000},
+  {id:'f76',bank:'fineco',date:'2026-07-27T00:00:00',amount:3999,type:'income',desc:'730 Fausto',balance:13285.81,realBalance:10285.81,isInitial:false,recurring:false,createdAt:t-(n-76)*1000},
+  {id:'f77',bank:'fineco',date:'2026-07-27T00:00:00',amount:2850,type:'income',desc:'Stipendio Fausto',balance:16135.81,realBalance:13135.81,isInitial:false,recurring:false,createdAt:t-(n-77)*1000},
+  {id:'f78',bank:'fineco',date:'2026-07-28T00:00:00',amount:10,type:'expense',desc:'Soldi Jacopo',balance:16125.81,realBalance:13125.81,isInitial:false,recurring:false,createdAt:t-(n-78)*1000},
+  {id:'f79',bank:'fineco',date:'2026-07-28T00:00:00',amount:905,type:'income',desc:'730 Laura',balance:17030.81,realBalance:14030.81,isInitial:false,recurring:false,createdAt:t-(n-79)*1000},
+  {id:'f80',bank:'fineco',date:'2026-07-28T00:00:00',amount:1620,type:'income',desc:'Stipendio Laura',balance:18650.81,realBalance:15650.81,isInitial:false,recurring:false,createdAt:t-(n-80)*1000},
+  {id:'f81',bank:'fineco',date:'2026-07-29T00:00:00',amount:105,type:'expense',desc:'BBVA',balance:18545.81,realBalance:15545.81,isInitial:false,recurring:false,createdAt:t-(n-81)*1000},
+  {id:'f82',bank:'fineco',date:'2026-07-29T00:00:00',amount:86,type:'expense',desc:'Polizze Unicredit',balance:18459.81,realBalance:15459.81,isInitial:false,recurring:false,createdAt:t-(n-82)*1000},
+  {id:'f83',bank:'fineco',date:'2026-07-29T00:00:00',amount:70,type:'expense',desc:'Soldi Rebecca',balance:18389.81,realBalance:15389.81,isInitial:false,recurring:false,createdAt:t-(n-83)*1000},
+  {id:'f84',bank:'fineco',date:'2026-07-29T00:00:00',amount:160.38,type:'expense',desc:'Spese Condominiali RATA N.1/2026',balance:18229.43,realBalance:15229.43,isInitial:false,recurring:false,createdAt:t-(n-84)*1000},
+  {id:'f85',bank:'fineco',date:'2026-07-29T00:00:00',amount:659.52,type:'expense',desc:'Spese Condominiali RATA N.2/2026+conguaglio',balance:17569.91,realBalance:14569.91,isInitial:false,recurring:false,createdAt:t-(n-85)*1000},
+  {id:'f86',bank:'fineco',date:'2026-07-29T00:00:00',amount:285.16,type:'expense',desc:'Spese Condominiali RATA N.3/2026',balance:17284.75,realBalance:14284.75,isInitial:false,recurring:false,createdAt:t-(n-86)*1000},
+  {id:'f87',bank:'fineco',date:'2026-07-29T00:00:00',amount:276.78,type:'expense',desc:'Spese Condominiali RATA N.4/2026',balance:17007.97,realBalance:14007.97,isInitial:false,recurring:false,createdAt:t-(n-87)*1000},
+  {id:'f88',bank:'fineco',date:'2026-07-30T00:00:00',amount:311.73,type:'expense',desc:'Finanziamento Macchina',balance:16696.24,realBalance:13696.24,isInitial:false,recurring:false,createdAt:t-(n-88)*1000},
+  {id:'f89',bank:'fineco',date:'2026-07-30T00:00:00',amount:73.5,type:'expense',desc:'Telepass + ATM',balance:16622.74,realBalance:13622.74,isInitial:false,recurring:false,createdAt:t-(n-89)*1000},
+  {id:'f90',bank:'fineco',date:'2026-07-31T00:00:00',amount:200,type:'income',desc:'730 Antonio',balance:16822.74,realBalance:13822.74,isInitial:false,recurring:false,createdAt:t-(n-90)*1000},
+  {id:'f91',bank:'fineco',date:'2026-08-01T00:00:00',amount:424.26,type:'expense',desc:'Finanziamento Ristrutturazione',balance:16398.48,realBalance:13398.48,isInitial:false,recurring:false,createdAt:t-(n-91)*1000},
+  {id:'f92',bank:'fineco',date:'2026-08-02T00:00:00',amount:20.99,type:'expense',desc:'Estensione Garanzia Lavatrice',balance:16377.49,realBalance:13377.49,isInitial:false,recurring:false,createdAt:t-(n-92)*1000},
+  {id:'f93',bank:'fineco',date:'2026-08-04T00:00:00',amount:300,type:'expense',desc:'Saldo Volley Rebecca',balance:16077.49,realBalance:13077.49,isInitial:false,recurring:false,createdAt:t-(n-93)*1000},
+  {id:'f94',bank:'fineco',date:'2026-08-05T00:00:00',amount:16,type:'expense',desc:'Arturo',balance:16061.49,realBalance:13061.49,isInitial:false,recurring:false,createdAt:t-(n-94)*1000},
+  {id:'f95',bank:'fineco',date:'2026-08-05T00:00:00',amount:135.22,type:'expense',desc:'Infissi',balance:15926.27,realBalance:12926.27,isInitial:false,recurring:false,createdAt:t-(n-95)*1000},
+  {id:'f96',bank:'fineco',date:'2026-08-05T00:00:00',amount:69.02,type:'expense',desc:'Prestito Fineco',balance:15857.25,realBalance:12857.25,isInitial:false,recurring:false,createdAt:t-(n-96)*1000},
+  {id:'f97',bank:'fineco',date:'2026-08-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Fausto',balance:15157.25,realBalance:12157.25,isInitial:false,recurring:false,createdAt:t-(n-97)*1000},
+  {id:'f98',bank:'fineco',date:'2026-08-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Laura',balance:14457.25,realBalance:11457.25,isInitial:false,recurring:false,createdAt:t-(n-98)*1000},
+  {id:'f99',bank:'fineco',date:'2026-08-15T00:00:00',amount:747.95,type:'expense',desc:'Mutuo',balance:13709.3,realBalance:10709.3,isInitial:false,recurring:false,createdAt:t-(n-99)*1000},
+  {id:'f100',bank:'fineco',date:'2026-08-19T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Fausto',balance:13903.6,realBalance:10903.6,isInitial:false,recurring:false,createdAt:t-(n-100)*1000},
+  {id:'f101',bank:'fineco',date:'2026-08-19T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Laura',balance:14097.9,realBalance:11097.9,isInitial:false,recurring:false,createdAt:t-(n-101)*1000},
+  {id:'f102',bank:'fineco',date:'2026-08-25T00:00:00',amount:24.95,type:'expense',desc:'Fastweb',balance:14072.95,realBalance:11072.95,isInitial:false,recurring:false,createdAt:t-(n-102)*1000},
+  {id:'f103',bank:'fineco',date:'2026-08-27T00:00:00',amount:2500,type:'income',desc:'Stipendio Fausto',balance:16572.95,realBalance:13572.95,isInitial:false,recurring:false,createdAt:t-(n-103)*1000},
+  {id:'f104',bank:'fineco',date:'2026-08-28T00:00:00',amount:10,type:'expense',desc:'Soldi Jacopo',balance:16562.95,realBalance:13562.95,isInitial:false,recurring:false,createdAt:t-(n-104)*1000},
+  {id:'f105',bank:'fineco',date:'2026-08-28T00:00:00',amount:1620,type:'income',desc:'Stipendio Laura',balance:18182.95,realBalance:15182.95,isInitial:false,recurring:false,createdAt:t-(n-105)*1000},
+  {id:'f106',bank:'fineco',date:'2026-08-29T00:00:00',amount:200,type:'expense',desc:'ATM Rebecca',balance:17982.95,realBalance:14982.95,isInitial:false,recurring:false,createdAt:t-(n-106)*1000},
+  {id:'f107',bank:'fineco',date:'2026-08-29T00:00:00',amount:105,type:'expense',desc:'BBVA',balance:17877.95,realBalance:14877.95,isInitial:false,recurring:false,createdAt:t-(n-107)*1000},
+  {id:'f108',bank:'fineco',date:'2026-08-29T00:00:00',amount:86,type:'expense',desc:'Polizze Unicredit',balance:17791.95,realBalance:14791.95,isInitial:false,recurring:false,createdAt:t-(n-108)*1000},
+  {id:'f109',bank:'fineco',date:'2026-08-29T00:00:00',amount:70,type:'expense',desc:'Soldi Rebecca',balance:17721.95,realBalance:14721.95,isInitial:false,recurring:false,createdAt:t-(n-109)*1000},
+  {id:'f110',bank:'fineco',date:'2026-08-30T00:00:00',amount:50,type:'expense',desc:'Certificato Medico Jacopo',balance:17671.95,realBalance:14671.95,isInitial:false,recurring:false,createdAt:t-(n-110)*1000},
+  {id:'f111',bank:'fineco',date:'2026-08-30T00:00:00',amount:311.73,type:'expense',desc:'Finanziamento Macchina',balance:17360.22,realBalance:14360.22,isInitial:false,recurring:false,createdAt:t-(n-111)*1000},
+  {id:'f112',bank:'fineco',date:'2026-08-30T00:00:00',amount:73.5,type:'expense',desc:'Telepass + ATM',balance:17286.72,realBalance:14286.72,isInitial:false,recurring:false,createdAt:t-(n-112)*1000},
+  {id:'f113',bank:'fineco',date:'2026-09-01T00:00:00',amount:424.26,type:'expense',desc:'Finanziamento Ristrutturazione',balance:16862.46,realBalance:13862.46,isInitial:false,recurring:false,createdAt:t-(n-113)*1000},
+  {id:'f114',bank:'fineco',date:'2026-09-02T00:00:00',amount:20.99,type:'expense',desc:'Estensione Garanzia Lavatrice',balance:16841.47,realBalance:13841.47,isInitial:false,recurring:false,createdAt:t-(n-114)*1000},
+  {id:'f115',bank:'fineco',date:'2026-09-05T00:00:00',amount:16,type:'expense',desc:'Arturo',balance:16825.47,realBalance:13825.47,isInitial:false,recurring:false,createdAt:t-(n-115)*1000},
+  {id:'f116',bank:'fineco',date:'2026-09-05T00:00:00',amount:135.22,type:'expense',desc:'Infissi',balance:16690.25,realBalance:13690.25,isInitial:false,recurring:false,createdAt:t-(n-116)*1000},
+  {id:'f117',bank:'fineco',date:'2026-09-05T00:00:00',amount:69.02,type:'expense',desc:'Prestito Fineco',balance:16621.23,realBalance:13621.23,isInitial:false,recurring:false,createdAt:t-(n-117)*1000},
+  {id:'f118',bank:'fineco',date:'2026-09-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Fausto',balance:15921.23,realBalance:12921.23,isInitial:false,recurring:false,createdAt:t-(n-118)*1000},
+  {id:'f119',bank:'fineco',date:'2026-09-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Laura',balance:15221.23,realBalance:12221.23,isInitial:false,recurring:false,createdAt:t-(n-119)*1000},
+  {id:'f120',bank:'fineco',date:'2026-09-15T00:00:00',amount:747.95,type:'expense',desc:'Mutuo',balance:14473.28,realBalance:11473.28,isInitial:false,recurring:false,createdAt:t-(n-120)*1000},
+  {id:'f121',bank:'fineco',date:'2026-09-22T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Fausto',balance:14667.58,realBalance:11667.58,isInitial:false,recurring:false,createdAt:t-(n-121)*1000},
+  {id:'f122',bank:'fineco',date:'2026-09-22T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Laura',balance:14861.88,realBalance:11861.88,isInitial:false,recurring:false,createdAt:t-(n-122)*1000},
+  {id:'f123',bank:'fineco',date:'2026-09-25T00:00:00',amount:24.95,type:'expense',desc:'Fastweb',balance:14836.93,realBalance:11836.93,isInitial:false,recurring:false,createdAt:t-(n-123)*1000},
+  {id:'f124',bank:'fineco',date:'2026-09-28T00:00:00',amount:10,type:'expense',desc:'Soldi Jacopo',balance:14826.93,realBalance:11826.93,isInitial:false,recurring:false,createdAt:t-(n-124)*1000},
+  {id:'f125',bank:'fineco',date:'2026-09-28T00:00:00',amount:2500,type:'income',desc:'Stipendio Fausto',balance:17326.93,realBalance:14326.93,isInitial:false,recurring:false,createdAt:t-(n-125)*1000},
+  {id:'f126',bank:'fineco',date:'2026-09-28T00:00:00',amount:1620,type:'income',desc:'Stipendio Laura',balance:18946.93,realBalance:15946.93,isInitial:false,recurring:false,createdAt:t-(n-126)*1000},
+  {id:'f127',bank:'fineco',date:'2026-09-29T00:00:00',amount:105,type:'expense',desc:'BBVA',balance:18841.93,realBalance:15841.93,isInitial:false,recurring:false,createdAt:t-(n-127)*1000},
+  {id:'f128',bank:'fineco',date:'2026-09-29T00:00:00',amount:86,type:'expense',desc:'Polizze Unicredit',balance:18755.93,realBalance:15755.93,isInitial:false,recurring:false,createdAt:t-(n-128)*1000},
+  {id:'f129',bank:'fineco',date:'2026-09-29T00:00:00',amount:70,type:'expense',desc:'Soldi Rebecca',balance:18685.93,realBalance:15685.93,isInitial:false,recurring:false,createdAt:t-(n-129)*1000},
+  {id:'f130',bank:'fineco',date:'2026-09-30T00:00:00',amount:311.73,type:'expense',desc:'Finanziamento Macchina',balance:18374.2,realBalance:15374.2,isInitial:false,recurring:false,createdAt:t-(n-130)*1000},
+  {id:'f131',bank:'fineco',date:'2026-09-30T00:00:00',amount:424.26,type:'expense',desc:'Finanziamento Ristrutturazione',balance:17949.94,realBalance:14949.94,isInitial:false,recurring:false,createdAt:t-(n-131)*1000},
+  {id:'f132',bank:'fineco',date:'2026-09-30T00:00:00',amount:73.5,type:'expense',desc:'Telepass + ATM',balance:17876.44,realBalance:14876.44,isInitial:false,recurring:false,createdAt:t-(n-132)*1000},
+  {id:'f133',bank:'fineco',date:'2026-10-02T00:00:00',amount:20.99,type:'expense',desc:'Estensione Garanzia Lavatrice',balance:17855.45,realBalance:14855.45,isInitial:false,recurring:false,createdAt:t-(n-133)*1000},
+  {id:'f134',bank:'fineco',date:'2026-10-06T00:00:00',amount:135.22,type:'expense',desc:'Infissi',balance:17720.23,realBalance:14720.23,isInitial:false,recurring:false,createdAt:t-(n-134)*1000},
+  {id:'f135',bank:'fineco',date:'2026-10-06T00:00:00',amount:69.02,type:'expense',desc:'Prestito Fineco',balance:17651.21,realBalance:14651.21,isInitial:false,recurring:false,createdAt:t-(n-135)*1000},
+  {id:'f136',bank:'fineco',date:'2026-10-07T00:00:00',amount:16,type:'expense',desc:'Arturo',balance:17635.21,realBalance:14635.21,isInitial:false,recurring:false,createdAt:t-(n-136)*1000},
+  {id:'f137',bank:'fineco',date:'2026-10-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Fausto',balance:16935.21,realBalance:13935.21,isInitial:false,recurring:false,createdAt:t-(n-137)*1000},
+  {id:'f138',bank:'fineco',date:'2026-10-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Laura',balance:16235.21,realBalance:13235.21,isInitial:false,recurring:false,createdAt:t-(n-138)*1000},
+  {id:'f139',bank:'fineco',date:'2026-10-15T00:00:00',amount:747.95,type:'expense',desc:'Mutuo',balance:15487.26,realBalance:12487.26,isInitial:false,recurring:false,createdAt:t-(n-139)*1000},
+  {id:'f140',bank:'fineco',date:'2026-10-22T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Fausto',balance:15681.56,realBalance:12681.56,isInitial:false,recurring:false,createdAt:t-(n-140)*1000},
+  {id:'f141',bank:'fineco',date:'2026-10-22T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Laura',balance:15875.86,realBalance:12875.86,isInitial:false,recurring:false,createdAt:t-(n-141)*1000},
+  {id:'f142',bank:'fineco',date:'2026-10-27T00:00:00',amount:24.95,type:'expense',desc:'Fastweb',balance:15850.91,realBalance:12850.91,isInitial:false,recurring:false,createdAt:t-(n-142)*1000},
+  {id:'f143',bank:'fineco',date:'2026-10-27T00:00:00',amount:2850,type:'income',desc:'Stipendio Fausto',balance:18700.91,realBalance:15700.91,isInitial:false,recurring:false,createdAt:t-(n-143)*1000},
+  {id:'f144',bank:'fineco',date:'2026-10-28T00:00:00',amount:1620,type:'income',desc:'Stipendio Laura',balance:20320.91,realBalance:17320.91,isInitial:false,recurring:false,createdAt:t-(n-144)*1000},
+  {id:'f145',bank:'fineco',date:'2026-10-29T00:00:00',amount:105,type:'expense',desc:'BBVA',balance:20215.91,realBalance:17215.91,isInitial:false,recurring:false,createdAt:t-(n-145)*1000},
+  {id:'f146',bank:'fineco',date:'2026-10-29T00:00:00',amount:86,type:'expense',desc:'Polizze Unicredit',balance:20129.91,realBalance:17129.91,isInitial:false,recurring:false,createdAt:t-(n-146)*1000},
+  {id:'f147',bank:'fineco',date:'2026-10-29T00:00:00',amount:10,type:'expense',desc:'Soldi Jacopo',balance:20119.91,realBalance:17119.91,isInitial:false,recurring:false,createdAt:t-(n-147)*1000},
+  {id:'f148',bank:'fineco',date:'2026-10-29T00:00:00',amount:70,type:'expense',desc:'Soldi Rebecca',balance:20049.91,realBalance:17049.91,isInitial:false,recurring:false,createdAt:t-(n-148)*1000},
+  {id:'f149',bank:'fineco',date:'2026-10-30T00:00:00',amount:311.73,type:'expense',desc:'Finanziamento Macchina',balance:19738.18,realBalance:16738.18,isInitial:false,recurring:false,createdAt:t-(n-149)*1000},
+  {id:'f150',bank:'fineco',date:'2026-11-02T00:00:00',amount:20.99,type:'expense',desc:'Estensione Garanzia Lavatrice',balance:19717.19,realBalance:16717.19,isInitial:false,recurring:false,createdAt:t-(n-150)*1000},
+  {id:'f151',bank:'fineco',date:'2026-11-02T00:00:00',amount:73.5,type:'expense',desc:'Telepass + ATM',balance:19643.69,realBalance:16643.69,isInitial:false,recurring:false,createdAt:t-(n-151)*1000},
+  {id:'f152',bank:'fineco',date:'2026-11-03T00:00:00',amount:424.26,type:'expense',desc:'Finanziamento Ristrutturazione',balance:19219.43,realBalance:16219.43,isInitial:false,recurring:false,createdAt:t-(n-152)*1000},
+  {id:'f153',bank:'fineco',date:'2026-11-05T00:00:00',amount:135.22,type:'expense',desc:'Infissi',balance:19084.21,realBalance:16084.21,isInitial:false,recurring:false,createdAt:t-(n-153)*1000},
+  {id:'f154',bank:'fineco',date:'2026-11-05T00:00:00',amount:69.02,type:'expense',desc:'Prestito Fineco',balance:19015.19,realBalance:16015.19,isInitial:false,recurring:false,createdAt:t-(n-154)*1000},
+  {id:'f155',bank:'fineco',date:'2026-11-06T00:00:00',amount:16,type:'expense',desc:'Arturo',balance:18999.19,realBalance:15999.19,isInitial:false,recurring:false,createdAt:t-(n-155)*1000},
+  {id:'f156',bank:'fineco',date:'2026-11-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Fausto',balance:18299.19,realBalance:15299.19,isInitial:false,recurring:false,createdAt:t-(n-156)*1000},
+  {id:'f157',bank:'fineco',date:'2026-11-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Laura',balance:17599.19,realBalance:14599.19,isInitial:false,recurring:false,createdAt:t-(n-157)*1000},
+  {id:'f158',bank:'fineco',date:'2026-11-16T00:00:00',amount:747.95,type:'expense',desc:'Mutuo',balance:16851.24,realBalance:13851.24,isInitial:false,recurring:false,createdAt:t-(n-158)*1000},
+  {id:'f159',bank:'fineco',date:'2026-11-20T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Fausto',balance:17045.54,realBalance:14045.54,isInitial:false,recurring:false,createdAt:t-(n-159)*1000},
+  {id:'f160',bank:'fineco',date:'2026-11-20T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Laura',balance:17239.84,realBalance:14239.84,isInitial:false,recurring:false,createdAt:t-(n-160)*1000},
+  {id:'f161',bank:'fineco',date:'2026-11-25T00:00:00',amount:24.95,type:'expense',desc:'Fastweb',balance:17214.89,realBalance:14214.89,isInitial:false,recurring:false,createdAt:t-(n-161)*1000},
+  {id:'f162',bank:'fineco',date:'2026-11-27T00:00:00',amount:2500,type:'income',desc:'Stipendio Fausto',balance:19714.89,realBalance:16714.89,isInitial:false,recurring:false,createdAt:t-(n-162)*1000},
+  {id:'f163',bank:'fineco',date:'2026-11-28T00:00:00',amount:10,type:'expense',desc:'Soldi Jacopo',balance:19704.89,realBalance:16704.89,isInitial:false,recurring:false,createdAt:t-(n-163)*1000},
+  {id:'f164',bank:'fineco',date:'2026-11-29T00:00:00',amount:105,type:'expense',desc:'BBVA',balance:19599.89,realBalance:16599.89,isInitial:false,recurring:false,createdAt:t-(n-164)*1000},
+  {id:'f165',bank:'fineco',date:'2026-11-29T00:00:00',amount:86,type:'expense',desc:'Polizze Unicredit',balance:19513.89,realBalance:16513.89,isInitial:false,recurring:false,createdAt:t-(n-165)*1000},
+  {id:'f166',bank:'fineco',date:'2026-11-29T00:00:00',amount:70,type:'expense',desc:'Soldi Rebecca',balance:19443.89,realBalance:16443.89,isInitial:false,recurring:false,createdAt:t-(n-166)*1000},
+  {id:'f167',bank:'fineco',date:'2026-11-30T00:00:00',amount:1620,type:'income',desc:'Stipendio Laura',balance:21063.89,realBalance:18063.89,isInitial:false,recurring:false,createdAt:t-(n-167)*1000},
+  {id:'f168',bank:'fineco',date:'2026-12-01T00:00:00',amount:76.66,type:'expense',desc:'Bollo Auto',balance:20987.23,realBalance:17987.23,isInitial:false,recurring:false,createdAt:t-(n-168)*1000},
+  {id:'f169',bank:'fineco',date:'2026-12-01T00:00:00',amount:311.73,type:'expense',desc:'Finanziamento Macchina',balance:20675.5,realBalance:17675.5,isInitial:false,recurring:false,createdAt:t-(n-169)*1000},
+  {id:'f170',bank:'fineco',date:'2026-12-01T00:00:00',amount:424.26,type:'expense',desc:'Finanziamento Ristrutturazione',balance:20251.24,realBalance:17251.24,isInitial:false,recurring:false,createdAt:t-(n-170)*1000},
+  {id:'f171',bank:'fineco',date:'2026-12-01T00:00:00',amount:73.5,type:'expense',desc:'Telepass + ATM',balance:20177.74,realBalance:17177.74,isInitial:false,recurring:false,createdAt:t-(n-171)*1000},
+  {id:'f172',bank:'fineco',date:'2026-12-05T00:00:00',amount:69.02,type:'expense',desc:'Prestito Fineco',balance:20108.72,realBalance:17108.72,isInitial:false,recurring:false,createdAt:t-(n-172)*1000},
+  {id:'f173',bank:'fineco',date:'2026-12-05T00:00:00',amount:264,type:'expense',desc:'TARI',balance:19844.72,realBalance:16844.72,isInitial:false,recurring:false,createdAt:t-(n-173)*1000},
+  {id:'f174',bank:'fineco',date:'2026-12-08T00:00:00',amount:135.22,type:'expense',desc:'Infissi',balance:19709.5,realBalance:16709.5,isInitial:false,recurring:false,createdAt:t-(n-174)*1000},
+  {id:'f175',bank:'fineco',date:'2026-12-10T00:00:00',amount:16,type:'expense',desc:'Arturo',balance:19693.5,realBalance:16693.5,isInitial:false,recurring:false,createdAt:t-(n-175)*1000},
+  {id:'f176',bank:'fineco',date:'2026-12-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Fausto',balance:18993.5,realBalance:15993.5,isInitial:false,recurring:false,createdAt:t-(n-176)*1000},
+  {id:'f177',bank:'fineco',date:'2026-12-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Laura',balance:18293.5,realBalance:15293.5,isInitial:false,recurring:false,createdAt:t-(n-177)*1000},
+  {id:'f178',bank:'fineco',date:'2026-12-15T00:00:00',amount:747.95,type:'expense',desc:'Mutuo',balance:17545.55,realBalance:14545.55,isInitial:false,recurring:false,createdAt:t-(n-178)*1000},
+  {id:'f179',bank:'fineco',date:'2026-12-15T00:00:00',amount:2389,type:'income',desc:'13esima Fausto',balance:19934.55,realBalance:16934.55,isInitial:false,recurring:false,createdAt:t-(n-179)*1000},
+  {id:'f180',bank:'fineco',date:'2026-12-15T00:00:00',amount:1359,type:'income',desc:'13esima Laura',balance:21293.55,realBalance:18293.55,isInitial:false,recurring:false,createdAt:t-(n-180)*1000},
+  {id:'f181',bank:'fineco',date:'2026-12-17T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Fausto',balance:21487.85,realBalance:18487.85,isInitial:false,recurring:false,createdAt:t-(n-181)*1000},
+  {id:'f182',bank:'fineco',date:'2026-12-17T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Laura',balance:21682.15,realBalance:18682.15,isInitial:false,recurring:false,createdAt:t-(n-182)*1000},
+  {id:'f183',bank:'fineco',date:'2026-12-17T00:00:00',amount:200.63,type:'expense',desc:'Assicurazione Auto',balance:21481.52,realBalance:18481.52,isInitial:false,recurring:false,createdAt:t-(n-183)*1000},
+  {id:'f184',bank:'fineco',date:'2026-12-17T00:00:00',amount:214.93,type:'expense',desc:'Assicurazione Casa',balance:21266.59,realBalance:18266.59,isInitial:false,recurring:false,createdAt:t-(n-184)*1000},
+  {id:'f185',bank:'fineco',date:'2026-12-28T00:00:00',amount:24.95,type:'expense',desc:'Fastweb',balance:21241.64,realBalance:18241.64,isInitial:false,recurring:false,createdAt:t-(n-185)*1000},
+  {id:'f186',bank:'fineco',date:'2026-12-28T00:00:00',amount:2500,type:'income',desc:'Stipendio Fausto',balance:23741.64,realBalance:20741.64,isInitial:false,recurring:false,createdAt:t-(n-186)*1000},
+  {id:'f187',bank:'fineco',date:'2026-12-28T00:00:00',amount:1641,type:'income',desc:'Stipendio Laura',balance:25382.64,realBalance:22382.64,isInitial:false,recurring:false,createdAt:t-(n-187)*1000},
+  {id:'f188',bank:'fineco',date:'2026-12-29T00:00:00',amount:105,type:'expense',desc:'BBVA',balance:25277.64,realBalance:22277.64,isInitial:false,recurring:false,createdAt:t-(n-188)*1000},
+  {id:'f189',bank:'fineco',date:'2026-12-29T00:00:00',amount:86,type:'expense',desc:'Polizze Unicredit',balance:25191.64,realBalance:22191.64,isInitial:false,recurring:false,createdAt:t-(n-189)*1000},
+  {id:'f190',bank:'fineco',date:'2026-12-29T00:00:00',amount:10,type:'expense',desc:'Soldi Jacopo',balance:25181.64,realBalance:22181.64,isInitial:false,recurring:false,createdAt:t-(n-190)*1000},
+  {id:'f191',bank:'fineco',date:'2026-12-29T00:00:00',amount:70,type:'expense',desc:'Soldi Rebecca',balance:25111.64,realBalance:22111.64,isInitial:false,recurring:false,createdAt:t-(n-191)*1000},
+  {id:'f192',bank:'fineco',date:'2026-12-30T00:00:00',amount:311.73,type:'expense',desc:'Finanziamento Macchina',balance:24799.91,realBalance:21799.91,isInitial:false,recurring:false,createdAt:t-(n-192)*1000},
+  {id:'f193',bank:'fineco',date:'2026-12-30T00:00:00',amount:73.5,type:'expense',desc:'Telepass + ATM',balance:24726.41,realBalance:21726.41,isInitial:false,recurring:false,createdAt:t-(n-193)*1000},
+  {id:'f194',bank:'fineco',date:'2027-01-01T00:00:00',amount:424.26,type:'expense',desc:'Finanziamento Ristrutturazione',balance:24302.15,realBalance:21302.15,isInitial:false,recurring:false,createdAt:t-(n-194)*1000},
+  {id:'f195',bank:'fineco',date:'2027-01-05T00:00:00',amount:135.22,type:'expense',desc:'Infissi',balance:24166.93,realBalance:21166.93,isInitial:false,recurring:false,createdAt:t-(n-195)*1000},
+  {id:'f196',bank:'fineco',date:'2027-01-05T00:00:00',amount:143,type:'expense',desc:'Nuoto Jacopo',balance:24023.93,realBalance:21023.93,isInitial:false,recurring:false,createdAt:t-(n-196)*1000},
+  {id:'f197',bank:'fineco',date:'2027-01-05T00:00:00',amount:69.02,type:'expense',desc:'Prestito Fineco',balance:23954.91,realBalance:20954.91,isInitial:false,recurring:false,createdAt:t-(n-197)*1000},
+  {id:'f198',bank:'fineco',date:'2027-01-09T00:00:00',amount:16,type:'expense',desc:'Arturo',balance:23938.91,realBalance:20938.91,isInitial:false,recurring:false,createdAt:t-(n-198)*1000},
+  {id:'f199',bank:'fineco',date:'2027-01-11T00:00:00',amount:700,type:'expense',desc:'Carta di credito Fausto',balance:23238.91,realBalance:20238.91,isInitial:false,recurring:false,createdAt:t-(n-199)*1000},
+  {id:'f200',bank:'fineco',date:'2027-01-11T00:00:00',amount:700,type:'expense',desc:'Carta di credito Laura',balance:22538.91,realBalance:19538.91,isInitial:false,recurring:false,createdAt:t-(n-200)*1000},
+  {id:'f201',bank:'fineco',date:'2027-01-15T00:00:00',amount:92.7,type:'expense',desc:'Dentista Fausto (Pulizia+Airflow)',balance:22446.21,realBalance:19446.21,isInitial:false,recurring:false,createdAt:t-(n-201)*1000},
+  {id:'f202',bank:'fineco',date:'2027-01-15T00:00:00',amount:92.7,type:'expense',desc:'Dentista Laura (Pulizia+Airflow)',balance:22353.51,realBalance:19353.51,isInitial:false,recurring:false,createdAt:t-(n-202)*1000},
+  {id:'f203',bank:'fineco',date:'2027-01-15T00:00:00',amount:172,type:'expense',desc:'Dentista Rebecca (Pulizia+Airflow)',balance:22181.51,realBalance:19181.51,isInitial:false,recurring:false,createdAt:t-(n-203)*1000},
+  {id:'f204',bank:'fineco',date:'2027-01-15T00:00:00',amount:747.95,type:'expense',desc:'Mutuo',balance:21433.56,realBalance:18433.56,isInitial:false,recurring:false,createdAt:t-(n-204)*1000},
+  {id:'f205',bank:'fineco',date:'2027-01-20T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Fausto',balance:21627.86,realBalance:18627.86,isInitial:false,recurring:false,createdAt:t-(n-205)*1000},
+  {id:'f206',bank:'fineco',date:'2027-01-20T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Laura',balance:21822.16,realBalance:18822.16,isInitial:false,recurring:false,createdAt:t-(n-206)*1000},
+  {id:'f207',bank:'fineco',date:'2027-01-25T00:00:00',amount:24.95,type:'expense',desc:'Fastweb',balance:21797.21,realBalance:18797.21,isInitial:false,recurring:false,createdAt:t-(n-207)*1000},
+  {id:'f208',bank:'fineco',date:'2027-01-27T00:00:00',amount:2850,type:'income',desc:'Stipendio Fausto',balance:24647.21,realBalance:21647.21,isInitial:false,recurring:false,createdAt:t-(n-208)*1000},
+  {id:'f209',bank:'fineco',date:'2027-01-28T00:00:00',amount:10,type:'expense',desc:'Soldi Jacopo',balance:24637.21,realBalance:21637.21,isInitial:false,recurring:false,createdAt:t-(n-209)*1000},
+  {id:'f210',bank:'fineco',date:'2027-01-28T00:00:00',amount:1543,type:'income',desc:'Stipendio Laura',balance:26180.21,realBalance:23180.21,isInitial:false,recurring:false,createdAt:t-(n-210)*1000},
+  {id:'f211',bank:'fineco',date:'2027-01-29T00:00:00',amount:105,type:'expense',desc:'BBVA',balance:26075.21,realBalance:23075.21,isInitial:false,recurring:false,createdAt:t-(n-211)*1000},
+  {id:'f212',bank:'fineco',date:'2027-01-29T00:00:00',amount:86,type:'expense',desc:'Polizze Unicredit',balance:25989.21,realBalance:22989.21,isInitial:false,recurring:false,createdAt:t-(n-212)*1000},
+  {id:'f213',bank:'fineco',date:'2027-01-29T00:00:00',amount:70,type:'expense',desc:'Soldi Rebecca',balance:25919.21,realBalance:22919.21,isInitial:false,recurring:false,createdAt:t-(n-213)*1000},
+  {id:'f214',bank:'fineco',date:'2027-01-30T00:00:00',amount:311.73,type:'expense',desc:'Finanziamento Macchina',balance:25607.48,realBalance:22607.48,isInitial:false,recurring:false,createdAt:t-(n-214)*1000},
+  {id:'f215',bank:'fineco',date:'2027-02-01T00:00:00',amount:424.26,type:'expense',desc:'Finanziamento Ristrutturazione',balance:25183.22,realBalance:22183.22,isInitial:false,recurring:false,createdAt:t-(n-215)*1000},
+  {id:'f216',bank:'fineco',date:'2027-02-02T00:00:00',amount:73.5,type:'expense',desc:'Telepass + ATM',balance:25109.72,realBalance:22109.72,isInitial:false,recurring:false,createdAt:t-(n-216)*1000},
+  {id:'f217',bank:'fineco',date:'2027-02-05T00:00:00',amount:16,type:'expense',desc:'Arturo',balance:25093.72,realBalance:22093.72,isInitial:false,recurring:false,createdAt:t-(n-217)*1000},
+  {id:'f218',bank:'fineco',date:'2027-02-05T00:00:00',amount:135.22,type:'expense',desc:'Infissi',balance:24958.5,realBalance:21958.5,isInitial:false,recurring:false,createdAt:t-(n-218)*1000},
+  {id:'f219',bank:'fineco',date:'2027-02-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Fausto',balance:24258.5,realBalance:21258.5,isInitial:false,recurring:false,createdAt:t-(n-219)*1000},
+  {id:'f220',bank:'fineco',date:'2027-02-10T00:00:00',amount:700,type:'expense',desc:'Carta di credito Laura',balance:23558.5,realBalance:20558.5,isInitial:false,recurring:false,createdAt:t-(n-220)*1000},
+  {id:'f221',bank:'fineco',date:'2027-02-15T00:00:00',amount:747.95,type:'expense',desc:'Mutuo',balance:22810.55,realBalance:19810.55,isInitial:false,recurring:false,createdAt:t-(n-221)*1000},
+  {id:'f222',bank:'fineco',date:'2027-02-19T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Fausto',balance:23004.85,realBalance:20004.85,isInitial:false,recurring:false,createdAt:t-(n-222)*1000},
+  {id:'f223',bank:'fineco',date:'2027-02-19T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Laura',balance:23199.15,realBalance:20199.15,isInitial:false,recurring:false,createdAt:t-(n-223)*1000},
+  {id:'f224',bank:'fineco',date:'2027-02-25T00:00:00',amount:24.95,type:'expense',desc:'Fastweb',balance:23174.2,realBalance:20174.2,isInitial:false,recurring:false,createdAt:t-(n-224)*1000},
+  {id:'f225',bank:'fineco',date:'2027-02-26T00:00:00',amount:2500,type:'income',desc:'Stipendio Fausto',balance:25674.2,realBalance:22674.2,isInitial:false,recurring:false,createdAt:t-(n-225)*1000},
+  {id:'f226',bank:'fineco',date:'2027-02-28T00:00:00',amount:105,type:'expense',desc:'BBVA',balance:25569.2,realBalance:22569.2,isInitial:false,recurring:false,createdAt:t-(n-226)*1000},
+  {id:'f227',bank:'fineco',date:'2027-02-28T00:00:00',amount:86,type:'expense',desc:'Polizze Unicredit',balance:25483.2,realBalance:22483.2,isInitial:false,recurring:false,createdAt:t-(n-227)*1000},
+  {id:'f228',bank:'fineco',date:'2027-02-28T00:00:00',amount:10,type:'expense',desc:'Soldi Jacopo',balance:25473.2,realBalance:22473.2,isInitial:false,recurring:false,createdAt:t-(n-228)*1000},
+  {id:'f229',bank:'fineco',date:'2027-02-28T00:00:00',amount:70,type:'expense',desc:'Soldi Rebecca',balance:25403.2,realBalance:22403.2,isInitial:false,recurring:false,createdAt:t-(n-229)*1000},
+  {id:'f230',bank:'fineco',date:'2027-03-01T00:00:00',amount:73.5,type:'expense',desc:'Telepass + ATM',balance:25329.7,realBalance:22329.7,isInitial:false,recurring:false,createdAt:t-(n-230)*1000},
+  {id:'f231',bank:'fineco',date:'2027-03-01T00:00:00',amount:424.26,type:'expense',desc:'Finanziamento Ristrutturazione',balance:24905.44,realBalance:21905.44,isInitial:false,recurring:false,createdAt:t-(n-231)*1000},
+  {id:'f232',bank:'fineco',date:'2027-03-01T00:00:00',amount:1562,type:'income',desc:'Stipendio Laura',balance:26467.44,realBalance:23467.44,isInitial:false,recurring:false,createdAt:t-(n-232)*1000},
+  {id:'f233',bank:'fineco',date:'2027-03-02T00:00:00',amount:311.73,type:'expense',desc:'Finanziamento Macchina',balance:26155.71,realBalance:23155.71,isInitial:false,recurring:false,createdAt:t-(n-233)*1000},
+  {id:'f234',bank:'fineco',date:'2027-03-03T00:00:00',amount:129.64,type:'expense',desc:'Interessi passivi',balance:26026.07,realBalance:23026.07,isInitial:false,recurring:false,createdAt:t-(n-234)*1000},
+  {id:'f235',bank:'fineco',date:'2027-03-05T00:00:00',amount:16,type:'expense',desc:'Arturo',balance:26010.07,realBalance:23010.07,isInitial:false,recurring:false,createdAt:t-(n-235)*1000},
+  {id:'f236',bank:'fineco',date:'2027-03-09T00:00:00',amount:135.22,type:'expense',desc:'Infissi',balance:25874.85,realBalance:22874.85,isInitial:false,recurring:false,createdAt:t-(n-236)*1000},
+  {id:'f237',bank:'fineco',date:'2027-03-10T00:00:00',amount:800,type:'expense',desc:'Carta di credito Fausto',balance:25074.85,realBalance:22074.85,isInitial:false,recurring:false,createdAt:t-(n-237)*1000},
+  {id:'f238',bank:'fineco',date:'2027-03-10T00:00:00',amount:800,type:'expense',desc:'Carta di credito Laura',balance:24274.85,realBalance:21274.85,isInitial:false,recurring:false,createdAt:t-(n-238)*1000},
+  {id:'f239',bank:'fineco',date:'2027-03-15T00:00:00',amount:747.95,type:'expense',desc:'Mutuo',balance:23526.9,realBalance:20526.9,isInitial:false,recurring:false,createdAt:t-(n-239)*1000},
+  {id:'f240',bank:'fineco',date:'2027-03-17T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Fausto',balance:23721.2,realBalance:20721.2,isInitial:false,recurring:false,createdAt:t-(n-240)*1000},
+  {id:'f241',bank:'fineco',date:'2027-03-17T00:00:00',amount:194.3,type:'income',desc:'Assegno Unico Laura',balance:23915.5,realBalance:20915.5,isInitial:false,recurring:false,createdAt:t-(n-241)*1000},
+  {id:'f242',bank:'fineco',date:'2027-03-25T00:00:00',amount:24.95,type:'expense',desc:'Fastweb',balance:23890.55,realBalance:20890.55,isInitial:false,recurring:false,createdAt:t-(n-242)*1000},
+  {id:'f243',bank:'fineco',date:'2027-03-26T00:00:00',amount:2500,type:'income',desc:'Stipendio Fausto',balance:26390.55,realBalance:23390.55,isInitial:false,recurring:false,createdAt:t-(n-243)*1000},
+  {id:'f244',bank:'fineco',date:'2027-03-28T00:00:00',amount:10,type:'expense',desc:'Soldi Jacopo',balance:26380.55,realBalance:23380.55,isInitial:false,recurring:false,createdAt:t-(n-244)*1000},
+  {id:'f245',bank:'fineco',date:'2027-03-29T00:00:00',amount:86,type:'expense',desc:'Polizze Unicredit',balance:26294.55,realBalance:23294.55,isInitial:false,recurring:false,createdAt:t-(n-245)*1000},
+  {id:'f246',bank:'fineco',date:'2027-03-29T00:00:00',amount:105,type:'expense',desc:'BBVA',balance:26189.55,realBalance:23189.55,isInitial:false,recurring:false,createdAt:t-(n-246)*1000},
+  {id:'f247',bank:'fineco',date:'2027-03-29T00:00:00',amount:70,type:'expense',desc:'Soldi Rebecca',balance:26119.55,realBalance:23119.55,isInitial:false,recurring:false,createdAt:t-(n-247)*1000},
+  {id:'f248',bank:'fineco',date:'2027-03-29T00:00:00',amount:1582,type:'income',desc:'Stipendio Laura',balance:27701.55,realBalance:24701.55,isInitial:false,recurring:false,createdAt:t-(n-248)*1000},
+  {id:'f249',bank:'fineco',date:'2027-03-30T00:00:00',amount:311.73,type:'expense',desc:'Finanziamento Macchina',balance:27389.82,realBalance:24389.82,isInitial:false,recurring:false,createdAt:t-(n-249)*1000},
+  {id:'f250',bank:'fineco',date:'2027-03-31T00:00:00',amount:73.5,type:'expense',desc:'Telepass + ATM',balance:27316.32,realBalance:24316.32,isInitial:false,recurring:false,createdAt:t-(n-250)*1000},
+  {id:'f251',bank:'fineco',date:'2027-04-01T00:00:00',amount:424.26,type:'expense',desc:'Finanziamento Ristrutturazione',balance:26892.06,realBalance:23892.06,isInitial:false,recurring:false,createdAt:t-(n-251)*1000},
+  {id:'f252',bank:'fineco',date:'2027-04-05T00:00:00',amount:135.22,type:'expense',desc:'Infissi',balance:26756.84,realBalance:23756.84,isInitial:false,recurring:false,createdAt:t-(n-252)*1000},
+  {id:'f253',bank:'fineco',date:'2027-11-30T00:00:00',amount:110,type:'expense',desc:'Revisione Caldaia',balance:26646.84,realBalance:23646.84,isInitial:false,recurring:false,createdAt:t-(n-253)*1000},
+  {id:'f254',bank:'fineco',date:'2029-05-03T00:00:00',amount:75,type:'expense',desc:'Rinnovo patente',balance:26571.84,realBalance:23571.84,isInitial:false,recurring:false,createdAt:t-(n-254)*1000}
+  ];
+  bankData.fineco.recurring=[
+    {id:'fr0',bank:'fineco',desc:'Mutuo',amount:747.95,type:'expense',freq:'monthly',day:15,createdAt:Date.now()},
+    {id:'fr1',bank:'fineco',desc:'Stipendio Fausto',amount:2500,type:'income',freq:'monthly',day:27,createdAt:Date.now()},
+    {id:'fr2',bank:'fineco',desc:'Stipendio Laura',amount:1620,type:'income',freq:'monthly',day:28,createdAt:Date.now()},
+    {id:'fr3',bank:'fineco',desc:'Fastweb',amount:24.95,type:'expense',freq:'monthly',day:25,createdAt:Date.now()},
+    {id:'fr4',bank:'fineco',desc:'Assegno Unico Fausto',amount:194.3,type:'income',freq:'monthly',day:21,createdAt:Date.now()},
+    {id:'fr5',bank:'fineco',desc:'Assegno Unico Laura',amount:194.3,type:'income',freq:'monthly',day:21,createdAt:Date.now()},
+    {id:'fr6',bank:'fineco',desc:'Finanziamento Macchina',amount:311.73,type:'expense',freq:'monthly',day:30,createdAt:Date.now()},
+    {id:'fr7',bank:'fineco',desc:'Finanziamento Ristrutturazione',amount:424.26,type:'expense',freq:'monthly',day:1,createdAt:Date.now()},
+    {id:'fr8',bank:'fineco',desc:'BBVA',amount:105,type:'expense',freq:'monthly',day:29,createdAt:Date.now()},
+    {id:'fr9',bank:'fineco',desc:'Polizze Unicredit',amount:86,type:'expense',freq:'monthly',day:29,createdAt:Date.now()},
+    {id:'fr10',bank:'fineco',desc:'Telepass + ATM',amount:73.5,type:'expense',freq:'monthly',day:30,createdAt:Date.now()},
+    {id:'fr11',bank:'fineco',desc:'Prestito Fineco',amount:69.02,type:'expense',freq:'monthly',day:5,createdAt:Date.now()},
+    {id:'fr12',bank:'fineco',desc:'Infissi',amount:135.22,type:'expense',freq:'monthly',day:5,createdAt:Date.now()},
+    {id:'fr13',bank:'fineco',desc:'Estensione Garanzia Lavatrice',amount:20.99,type:'expense',freq:'monthly',day:2,createdAt:Date.now()},
+    {id:'fr14',bank:'fineco',desc:'Carta di credito Fausto',amount:700,type:'expense',freq:'monthly',day:10,createdAt:Date.now()},
+    {id:'fr15',bank:'fineco',desc:'Carta di credito Laura',amount:700,type:'expense',freq:'monthly',day:10,createdAt:Date.now()},
+    {id:'fr16',bank:'fineco',desc:'Arturo',amount:16,type:'expense',freq:'monthly',day:5,createdAt:Date.now()},
+    {id:'fr17',bank:'fineco',desc:'Soldi Jacopo',amount:10,type:'expense',freq:'monthly',day:28,createdAt:Date.now()},
+    {id:'fr18',bank:'fineco',desc:'Soldi Rebecca',amount:70,type:'expense',freq:'monthly',day:29,createdAt:Date.now()}
+  ];
+  save();
+}
+function seedBbva(){
+  bankData.bbva.salvadanaio=6508.96;
+  const t=Date.now(),n=19;
+  bankData.bbva.transactions=[
+  {id:'b0',bank:'bbva',date:'2026-04-09T00:00:00',amount:34.99,type:'income',desc:'Saldo iniziale',balance:34.99,realBalance:null,isInitial:true,recurring:false,createdAt:t-(n-0)*1000},
+  {id:'b1',bank:'bbva',date:'2026-04-13T00:00:00',amount:2.99,type:'expense',desc:'HBOMAX (dal 13/05 5,99€)',balance:32.0,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-1)*1000},
+  {id:'b2',bank:'bbva',date:'2026-04-18T00:00:00',amount:6.99,type:'expense',desc:'Ho Mobile Fausto',balance:25.01,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-2)*1000},
+  {id:'b3',bank:'bbva',date:'2026-04-18T00:00:00',amount:5.99,type:'expense',desc:'Ho Mobile Rebecca',balance:19.02,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-3)*1000},
+  {id:'b4',bank:'bbva',date:'2026-04-20T00:00:00',amount:6.99,type:'expense',desc:'Ho Mobile Laura',balance:12.03,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-4)*1000},
+  {id:'b5',bank:'bbva',date:'2026-04-23T00:00:00',amount:4.99,type:'expense',desc:'Apple TV (dal 23/05 9,99€)',balance:7.04,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-5)*1000},
+  {id:'b6',bank:'bbva',date:'2026-04-25T00:00:00',amount:3.99,type:'expense',desc:'Disney+ (dal 25/07 6,99€)',balance:3.05,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-6)*1000},
+  {id:'b7',bank:'bbva',date:'2026-04-27T00:00:00',amount:105,type:'income',desc:'Alimentazione Automatica',balance:108.05,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-7)*1000},
+  {id:'b8',bank:'bbva',date:'2026-04-28T00:00:00',amount:2,type:'expense',desc:'Now (Cinema)',balance:106.05,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-8)*1000},
+  {id:'b9',bank:'bbva',date:'2026-04-28T00:00:00',amount:2,type:'expense',desc:'Now (Intrattenimento)',balance:104.05,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-9)*1000},
+  {id:'b10',bank:'bbva',date:'2026-04-28T00:00:00',amount:9.99,type:'expense',desc:'iCloud+',balance:94.06,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-10)*1000},
+  {id:'b11',bank:'bbva',date:'2026-04-28T00:00:00',amount:227.04,type:'income',desc:'Trasferimento da Salvadanaio',balance:321.1,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-11)*1000},
+  {id:'b12',bank:'bbva',date:'2026-04-29T00:00:00',amount:227.04,type:'expense',desc:'Rata 2 Paypal',balance:94.06,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-12)*1000},
+  {id:'b13',bank:'bbva',date:'2026-05-03T00:00:00',amount:14.99,type:'expense',desc:'Now (Sport)',balance:79.07,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-13)*1000},
+  {id:'b14',bank:'bbva',date:'2026-05-03T00:00:00',amount:6.99,type:'expense',desc:'Netflix',balance:72.08,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-14)*1000},
+  {id:'b15',bank:'bbva',date:'2026-05-06T00:00:00',amount:35,type:'expense',desc:'Purificatore acqua',balance:37.08,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-15)*1000},
+  {id:'b16',bank:'bbva',date:'2026-05-28T00:00:00',amount:227.03,type:'income',desc:'Trasferimento da Salvadanaio',balance:264.11,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-16)*1000},
+  {id:'b17',bank:'bbva',date:'2026-05-29T00:00:00',amount:227.03,type:'expense',desc:'Rata 3 Paypal',balance:37.08,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-17)*1000},
+  {id:'b18',bank:'bbva',date:'2026-08-03T00:00:00',amount:49.9,type:'expense',desc:'Prime',balance:-12.82,realBalance:null,isInitial:false,recurring:false,createdAt:t-(n-18)*1000}
+  ];
+  bankData.bbva.recurring=[
+    {id:'br0',bank:'bbva',desc:'Alimentazione Automatica',amount:105,type:'income',freq:'monthly',day:27,createdAt:Date.now()},
+    {id:'br1',bank:'bbva',desc:'Ho Mobile Fausto',amount:6.99,type:'expense',freq:'monthly',day:18,createdAt:Date.now()},
+    {id:'br2',bank:'bbva',desc:'Ho Mobile Rebecca',amount:5.99,type:'expense',freq:'monthly',day:18,createdAt:Date.now()},
+    {id:'br3',bank:'bbva',desc:'Ho Mobile Laura',amount:6.99,type:'expense',freq:'monthly',day:20,createdAt:Date.now()},
+    {id:'br4',bank:'bbva',desc:'HBOMAX',amount:5.99,type:'expense',freq:'monthly',day:13,createdAt:Date.now()},
+    {id:'br5',bank:'bbva',desc:'Apple TV',amount:9.99,type:'expense',freq:'monthly',day:23,createdAt:Date.now()},
+    {id:'br6',bank:'bbva',desc:'Disney+',amount:6.99,type:'expense',freq:'monthly',day:25,createdAt:Date.now()},
+    {id:'br7',bank:'bbva',desc:'Netflix',amount:6.99,type:'expense',freq:'monthly',day:3,createdAt:Date.now()},
+    {id:'br8',bank:'bbva',desc:'Now (Cinema)',amount:2,type:'expense',freq:'monthly',day:28,createdAt:Date.now()},
+    {id:'br9',bank:'bbva',desc:'Now (Intrattenimento)',amount:2,type:'expense',freq:'monthly',day:28,createdAt:Date.now()},
+    {id:'br10',bank:'bbva',desc:'Now (Sport)',amount:14.99,type:'expense',freq:'monthly',day:3,createdAt:Date.now()},
+    {id:'br11',bank:'bbva',desc:'iCloud+',amount:9.99,type:'expense',freq:'monthly',day:28,createdAt:Date.now()},
+    {id:'br12',bank:'bbva',desc:'Prime',amount:49.90,type:'expense',freq:'yearly',day:3,createdAt:Date.now()},
+    {id:'br13',bank:'bbva',desc:'Purificatore acqua',amount:35,type:'expense',freq:'monthly',day:6,createdAt:Date.now()}
+  ];
+  save();
+}
+
+// ── CALCULATIONS ─────────────────────────────────────────────────────────────
+function recalcBalances(){
+  const list=[...txs()].sort((a,b)=>new Date(a.date)-new Date(b.date)||a.createdAt-b.createdAt);
+  let running=0;
+  const initTx=list.find(t=>t.isInitial);
+  if(initTx)running=initTx.balance;
+  list.forEach(tx=>{
+    if(tx.isInitial){tx.balance=running;}
+    else{running+=tx.type==='income'?tx.amount:-tx.amount;tx.balance=Math.round(running*100)/100;}
+    // realBalance: only for fineco (reserve-based). BBVA realBalance stays null.
+    if(currentBank==='fineco') tx.realBalance=Math.round((tx.balance-bd().reserve)*100)/100;
+    else tx.realBalance=null;
+  });
+  list.forEach(s=>{const i=txs().findIndex(t=>t.id===s.id);if(i>=0)txs()[i]=s;});
+}
+
+function getBalanceAtDate(targetDateStr){
+  if(txs().length===0)return{balance:0,secondary:0,tx:null};
+  const target=targetDateStr?new Date(targetDateStr):new Date();
+  const tH=dpSelectedTime?parseInt(dpSelectedTime.split(':')[0]):23;
+  const tM=dpSelectedTime?parseInt(dpSelectedTime.split(':')[1]):59;
+  const end=new Date(target.getFullYear(),target.getMonth(),target.getDate(),tH,tM,59);
+  const sorted=[...txs()].filter(t=>new Date(t.date)<=end).sort((a,b)=>new Date(b.date)-new Date(a.date)||b.createdAt-a.createdAt);
+  if(sorted.length===0)return{balance:0,secondary:0,tx:null};
+  const tx=sorted[0];
+  // secondary: fineco = balance-reserve (auto); bbva = salvadanaio (manual only, never changes with movements)
+  const secondary=currentBank==='fineco'
+    ?(tx.realBalance??Math.round((tx.balance-bd().reserve)*100)/100)
+    :bd().salvadanaio;
+  return{balance:tx.balance,secondary,tx};
+}
+
+function getMonthStats(date){
+  const d=date||new Date(),mo=d.getMonth(),yr=d.getFullYear();
+  const m=txs().filter(t=>{const td=new Date(t.date);return td.getMonth()===mo&&td.getFullYear()===yr;});
+  return{income:m.filter(t=>t.type==='income').reduce((a,b)=>a+b.amount,0),expense:m.filter(t=>t.type==='expense').reduce((a,b)=>a+b.amount,0)};
+}
+
+// ── FORMATTING ────────────────────────────────────────────────────────────────
+function fmt(n){return(n<0?'-':'')+'€'+Math.abs(n).toLocaleString('it-IT',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function fmtSgn(n){return(n>=0?'+':'')+fmt(n);}
+function fmtDate(d){return new Date(d).toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'});}
+function fmtDateTime(d){const dt=new Date(d);const base=dt.toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'});return(dt.getHours()===0&&dt.getMinutes()===0)?base:base+' '+dt.toLocaleTimeString('it-IT',{hour:'2-digit',minute:'2-digit'});}
+
+// ── BANK SWITCH ───────────────────────────────────────────────────────────────
+function switchBank(bank){
+  currentBank=bank;dashDate=null;dpSelectedTime='';activeMonthFilter=null;
+  document.documentElement.style.setProperty('--bank-color',BANKS[bank].color);
+  document.getElementById('appTitle').textContent='🏦 '+BANKS[bank].name;
+  const isF=bank==='fineco';
+  document.getElementById('tab-cards').style.display=isF?'':'none';
+  document.getElementById('nav-cards').style.display=isF?'':'none';
+  if(!isF&&document.getElementById('page-cards').classList.contains('active')){switchNav('home',false);return;}
+  renderAll();
+}
+
+// ── RENDER HOME ───────────────────────────────────────────────────────────────
+function renderHome(){
+  const todayStr=new Date().toISOString().split('T')[0];
+  const targetDate=dashDate||todayStr;
+  const isToday=targetDate===todayStr&&!dpSelectedTime;
+  const{balance,secondary,tx}=getBalanceAtDate(targetDate);
+  const cfg=bcfg();
+
+  const btn=document.getElementById('datePickBtn'),dlbl=document.getElementById('datePickLabel'),lbl=document.getElementById('balanceLabel');
+  if(isToday){dlbl.textContent='Oggi';btn.classList.remove('pinned');lbl.textContent='Saldo '+cfg.name;}
+  else{const d=new Date(targetDate);let l=d.toLocaleDateString('it-IT',{day:'2-digit',month:'short',year:'numeric'});if(dpSelectedTime)l+=' '+dpSelectedTime;dlbl.textContent=l;btn.classList.add('pinned');lbl.textContent='Saldo al';}
+
+  const note=document.getElementById('balanceNote');
+  if(tx&&tx.date.split('T')[0]!==targetDate&&!isToday)note.textContent='Ultimo mov. al '+fmtDate(tx.date)+': '+tx.desc;
+  else if(isToday&&tx){note.textContent=txs().some(t=>t.date.split('T')[0]===todayStr)?'':'Ultimo mov. al '+fmtDate(tx.date);}
+  else note.textContent='';
+
+  const balEl=document.getElementById('mainBalance');
+  balEl.textContent=fmt(balance);balEl.className='balance-amount '+(balance>=0?'positive':'negative');
+
+  const secEl=document.getElementById('realBalance');
+  secEl.textContent=fmt(secondary);
+  document.getElementById('secondaryLabel').textContent=cfg.secLabel+':';
+  if(currentBank==='fineco')secEl.style.color=secondary<0?'var(--red)':'var(--green)';
+  else secEl.style.color='var(--green)';  // salvadanaio always green
+
+  const stats=getMonthStats(new Date(targetDate+'T12:00:00'));
+  document.getElementById('monthIncome').textContent=fmt(stats.income);
+  document.getElementById('monthExpense').textContent=fmt(stats.expense);
+
+  const cutoff=new Date(targetDate+'T23:59:59');
+  const sorted=[...txs()].filter(t=>new Date(t.date)<=cutoff).sort((a,b)=>new Date(b.date)-new Date(a.date)||b.createdAt-a.createdAt);
+  document.getElementById('homeListTitle').textContent=isToday?'Movimenti recenti':'Movimenti fino al '+new Date(targetDate).toLocaleDateString('it-IT',{day:'2-digit',month:'long'});
+  const cont=document.getElementById('recentTransactions');
+  cont.innerHTML=sorted.slice(0,10).length===0?emptyHtml('📭','Nessun movimento','Premi + per aggiungere'):sorted.slice(0,10).map(t=>txHtml(t)).join('');
+}
+
+// ── RENDER MOVEMENTS ──────────────────────────────────────────────────────────
+function sortTx(list,order){
+  switch(order){
+    case 'date-asc':    return list.sort((a,b)=>new Date(a.date)-new Date(b.date)||a.createdAt-b.createdAt);
+    case 'amount-desc': return list.sort((a,b)=>b.amount-a.amount||new Date(b.date)-new Date(a.date));
+    case 'amount-asc':  return list.sort((a,b)=>a.amount-b.amount||new Date(b.date)-new Date(a.date));
+    default:            return list.sort((a,b)=>new Date(b.date)-new Date(a.date)||b.createdAt-a.createdAt);
+  }
+}
+function setSortOrder(order,btn){
+  movSortOrder=order;
+  document.querySelectorAll('.sort-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderMovements();
+}
+function renderMovements(){
+  const months=[...new Set(txs().map(t=>t.date.slice(0,7)))].sort().reverse();
+  document.getElementById('monthFilter').innerHTML=
+    '<button class="month-chip '+(activeMonthFilter?'':'active')+'" onclick="filterMonth(null)">Tutti</button>'+
+    months.map(m=>{const[yr,mo]=m.split('-');const label=new Date(yr,mo-1).toLocaleDateString('it-IT',{month:'short',year:'2-digit'});return`<button class="month-chip ${activeMonthFilter===m?'active':''}" onclick="filterMonth('${m}')">${label}</button>`;}).join('');
+  let filtered=[...txs()];
+  if(activeMonthFilter)filtered=filtered.filter(t=>t.date.startsWith(activeMonthFilter));
+  filtered=sortTx(filtered,movSortOrder);
+  const title=activeMonthFilter?(()=>{const[yr,mo]=activeMonthFilter.split('-');return new Date(yr,mo-1).toLocaleDateString('it-IT',{month:'long',year:'numeric'});})():`Tutti i movimenti (${filtered.length})`;
+  document.getElementById('movListTitle').textContent=title;
+  document.getElementById('allTransactions').innerHTML=filtered.length===0?emptyHtml('📂','Nessun movimento',''):filtered.map(t=>txHtml(t)).join('');
+}
+function filterMonth(m){activeMonthFilter=m;renderMovements();}
+
+// ── RENDER RECURRING ──────────────────────────────────────────────────────────
+function renderRecurring(){
+  const f={monthly:1,bimonthly:0.5,quarterly:1/3,yearly:1/12,weekly:4.33,custom:1};
+  const me=b=>b.amount*(f[b.freq]||1);
+  const out=recs().filter(r=>r.type==='expense').reduce((a,b)=>a+me(b),0);
+  const inp=recs().filter(r=>r.type==='income').reduce((a,b)=>a+me(b),0);
+  document.getElementById('recTotalOut').textContent=fmt(out);
+  document.getElementById('recTotalIn').textContent=fmt(inp);
+  const bal=inp-out;
+  const bEl=document.getElementById('recBalance');bEl.textContent=(bal>=0?'+':'')+fmt(bal);bEl.style.color=bal>=0?'var(--green)':'var(--red)';
+  const cont=document.getElementById('recurringList');
+  if(recs().length===0){cont.innerHTML=emptyHtml('🔄','Nessuna ricorrente','');return;}
+  cont.innerHTML=[...recs()].sort((a,b)=>(a.type===b.type?b.amount-a.amount:a.type==='expense'?-1:1)).map(r=>{
+    const s=r.type==='income'?'+':'-',cls=r.type==='income'?'pos':'neg',ic=r.type==='income'?'rec-income':'';
+    return`<div class="rec-item animate-in" onclick="openRecDetail('${r.id}')"><div class="rec-icon ${ic}">${getIcon(r.desc)}</div><div class="rec-info"><div class="rec-name">${r.desc}</div><div class="rec-meta"><span class="rec-freq">${FL[r.freq]||r.freq}</span>${r.day?' · giorno '+r.day:''}</div></div><div class="rec-amount ${cls}">${s}${fmt(r.amount)}</div></div>`;
+  }).join('');
+}
+
+// ── RENDER STATS ──────────────────────────────────────────────────────────────
+function renderStats(){
+  const now=new Date();
+  const{balance,secondary}=getBalanceAtDate(null);
+  const stats=getMonthStats(now);
+  const ti=txs().filter(t=>t.type==='income').reduce((a,b)=>a+b.amount,0);
+  const te=txs().filter(t=>t.type==='expense').reduce((a,b)=>a+b.amount,0);
+  const cfg=bcfg();
+  const sc=currentBank==='fineco'?(secondary<0?'var(--red)':'var(--green)'):'var(--green)';
+  document.getElementById('statsGrid').innerHTML=
+    `<div class="stat-card animate-in"><div class="stat-card-label">Saldo attuale</div><div class="stat-card-value" style="color:${balance>=0?'var(--green)':'var(--red)'}">${fmt(balance)}</div><div class="stat-card-sub" style="color:${sc}">${cfg.secLabel}: ${fmt(secondary)}</div></div>`+
+    `<div class="stat-card animate-in"><div class="stat-card-label">Questo mese</div><div class="stat-card-value" style="color:${(stats.income-stats.expense)>=0?'var(--green)':'var(--red)'}">${fmtSgn(stats.income-stats.expense)}</div><div class="stat-card-sub">${now.toLocaleDateString('it-IT',{month:'long'})}</div></div>`+
+    `<div class="stat-card animate-in"><div class="stat-card-label">Entrate totali</div><div class="stat-card-value income">${fmt(ti)}</div><div class="stat-card-sub">${txs().filter(t=>t.type==='income').length} mov.</div></div>`+
+    `<div class="stat-card animate-in"><div class="stat-card-label">Uscite totali</div><div class="stat-card-value expense">${fmt(te)}</div><div class="stat-card-sub">${txs().filter(t=>t.type==='expense').length} mov.</div></div>`;
+  const mo=now.getMonth(),yr=now.getFullYear();
+  const me=txs().filter(t=>{const td=new Date(t.date);return td.getMonth()===mo&&td.getFullYear()===yr&&t.type==='expense';});
+  const cats={};me.forEach(t=>{cats[t.desc]=(cats[t.desc]||0)+t.amount;});
+  const sorted=Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const max=sorted[0]?.[1]||1;
+  const colors=['#7c6af7','#e85d8a','#3ecf8e','#f5c842','#60a5fa','#f97316','#a78bfa','#34d399'];
+  document.getElementById('categoryBar').innerHTML=sorted.length===0?emptyHtml('📊','Nessun dato',''):sorted.map(([name,val],i)=>`<div class="cat-item"><div class="cat-dot" style="background:${colors[i%8]}"></div><div style="flex:1"><div style="display:flex;justify-content:space-between"><div class="cat-name">${name}</div><div class="cat-amount">${fmt(val)}</div></div><div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${(val/max*100).toFixed(1)}%;background:${colors[i%8]}"></div></div></div></div>`).join('');
+}
+
+
+// ── CARTE DI CREDITO ─────────────────────────────────────────────────────────
+function renderCards(){
+  if(currentBank!=='fineco')return;
+  const cf=bankData.fineco.cards.fausto, cl=bankData.fineco.cards.laura;
+  const addF=cf.saldo+cf.prelievo, addL=cl.saldo+cl.prelievo;
+  document.getElementById('cardFaustoLabel').textContent='ADDEBITO AL '+cf.dataAddebito;
+  document.getElementById('cardFaustoAddebito').textContent=fmt(addF);
+  document.getElementById('cardFaustoPlafond').textContent=fmt(cf.plafond);
+  document.getElementById('cardFaustoSaldo').textContent=fmt(cf.saldo);
+  document.getElementById('cardFaustoPrelievo').textContent=fmt(cf.prelievo);
+  document.getElementById('cardFaustoRate').textContent=fmt(cf.rate);
+  document.getElementById('cardLauraLabel').textContent='ADDEBITO AL '+cl.dataAddebito;
+  document.getElementById('cardLauraAddebito').textContent=fmt(addL);
+  document.getElementById('cardLauraPlafond').textContent=fmt(cl.plafond);
+  document.getElementById('cardLauraSaldo').textContent=fmt(cl.saldo);
+  document.getElementById('cardLauraPrelievo').textContent=fmt(cl.prelievo);
+  document.getElementById('cardLauraRate').textContent=fmt(cl.rate);
+  document.getElementById('cardTotaleAddebito').textContent=fmt(addF+addL);
+  document.getElementById('cardTotalePlafond').textContent=fmt(cf.plafond+cl.plafond);
+}
+function openEditCard(who){
+  editingCard=who;
+  const d=bankData.fineco.cards[who];
+  document.getElementById('editCardTitle').textContent='Modifica Carta '+(who==='fausto'?'Fausto':'Laura');
+  document.getElementById('editCardSaldo').value=d.saldo;
+  document.getElementById('editCardPrelievo').value=d.prelievo;
+  document.getElementById('editCardRate').value=d.rate;
+  document.getElementById('editCardPlafond').value=d.plafond;
+  document.getElementById('editCardDataAddebito').value=d.dataAddebito||'';
+  document.getElementById('editCardModal').classList.add('open');
+}
+function saveEditCard(){
+  if(!editingCard)return;
+  bankData.fineco.cards[editingCard]={
+    saldo:parseFloat(document.getElementById('editCardSaldo').value)||0,
+    prelievo:parseFloat(document.getElementById('editCardPrelievo').value)||0,
+    rate:parseFloat(document.getElementById('editCardRate').value)||0,
+    plafond:parseFloat(document.getElementById('editCardPlafond').value)||0,
+    dataAddebito:document.getElementById('editCardDataAddebito').value.trim()||bankData.fineco.cards[editingCard].dataAddebito
+  };
+  save();closeModal('editCardModal');renderCards();
+}
+
+function renderAll(){recalcBalances();renderHome();renderMovements();renderRecurring();renderCards();renderStats();}
+function emptyHtml(icon,text,sub){return`<div class="empty-state"><div class="empty-icon">${icon}</div><div class="empty-text">${text}</div>${sub?`<div class="empty-sub">${sub}</div>`:''}</div>`;}
+
+// ── TX HTML ───────────────────────────────────────────────────────────────────
+function txHtml(tx,hl){
+  const s=tx.type==='income'?'+':'-',cls=tx.type==='income'?'pos':'neg',ic=tx.type==='income'?'income-icon':'expense-icon';
+  const desc=hl?highlightText(tx.desc,hl):tx.desc;
+  return`<div class="tx-item ${tx.recurring?'recurring':''} animate-in" onclick="openDetail('${tx.id}')"><div class="tx-icon ${ic}">${getIcon(tx.desc)}</div><div class="tx-info"><div class="tx-name">${desc}</div><div class="tx-meta"><span>${fmtDateTime(tx.date)}</span>${tx.recurring?'<span class="tx-badge">↻ ric.</span>':''}</div></div><div style="text-align:right"><div class="tx-amount ${cls}">${s}${fmt(tx.amount)}</div><div class="tx-saldo">${fmt(tx.balance)}</div></div></div>`;
+}
+
+// ── NAVIGATION ────────────────────────────────────────────────────────────────
+function switchTab(btn,page){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));btn.classList.add('active');switchNav(page,true);}
+function switchNav(page,fromTab){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('nav-'+page)?.classList.add('active');
+  if(!fromTab){const m={home:'dashboard',movements:'movim',recurring:'ricorr',stats:'stat'};document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.textContent.toLowerCase().includes(m[page]||page)));}
+  if(page==='stats')renderStats();else if(page==='recurring')renderRecurring();else if(page==='movements')renderMovements();else if(page==='cards')renderCards();else renderHome();
+}
+
+// ── DATE PICKER ───────────────────────────────────────────────────────────────
+function openDatePicker(){const ref=dashDate?new Date(dashDate):new Date();dpViewYear=ref.getFullYear();dpViewMonth=ref.getMonth();renderDpGrid();document.getElementById('datepickerOverlay').classList.add('open');}
+function closeDatePickerBg(e){if(e.target===document.getElementById('datepickerOverlay'))document.getElementById('datepickerOverlay').classList.remove('open');}
+function dpChangeMonth(d){dpViewMonth+=d;if(dpViewMonth<0){dpViewMonth=11;dpViewYear--;}if(dpViewMonth>11){dpViewMonth=0;dpViewYear++;}renderDpGrid();}
+function renderDpGrid(){
+  const todayStr=new Date().toISOString().split('T')[0];
+  const txDates=new Set(txs().map(t=>t.date.split('T')[0]));
+  document.getElementById('dpMonthLabel').textContent=new Date(dpViewYear,dpViewMonth).toLocaleDateString('it-IT',{month:'long',year:'numeric'});
+  const first=new Date(dpViewYear,dpViewMonth,1);
+  let sd=first.getDay()-1;if(sd<0)sd=6;
+  const dim=new Date(dpViewYear,dpViewMonth+1,0).getDate();
+  const sel=dashDate||todayStr;
+  let h='';for(let i=0;i<sd;i++)h+='<button class="dp-day empty"></button>';
+  for(let d=1;d<=dim;d++){const ds=dpViewYear+'-'+String(dpViewMonth+1).padStart(2,'0')+'-'+String(d).padStart(2,'0');let c='dp-day';if(ds===todayStr)c+=' today';if(ds===sel)c+=' selected';if(txDates.has(ds))c+=' has-tx';h+=`<button class="${c}" onclick="selectDpDate('${ds}')">${d}</button>`;}
+  document.getElementById('dpGrid').innerHTML=h;
+}
+function selectDpDate(dateStr){
+  const todayStr=new Date().toISOString().split('T')[0];
+  const tv=document.getElementById('dpTimeInput').value;
+  dpSelectedTime=(tv&&tv!=='23:59')?tv:'';
+  dashDate=(dateStr===todayStr&&!dpSelectedTime)?null:dateStr;
+  document.getElementById('datepickerOverlay').classList.remove('open');
+  renderHome();
+}
+function clearDpTime(){document.getElementById('dpTimeInput').value='23:59';dpSelectedTime='';}
+function resetToToday(){dashDate=null;dpSelectedTime='';document.getElementById('dpTimeInput').value='23:59';document.getElementById('datepickerOverlay').classList.remove('open');renderHome();}
+
+// ── EDIT BALANCE ──────────────────────────────────────────────────────────────
+function openEditBalance(){
+  const cfg=bcfg();
+  const{balance,secondary}=getBalanceAtDate(null);
+  document.getElementById('editBalTitle').textContent='Modifica Saldo '+cfg.name;
+  document.getElementById('editBalMainLabel').textContent='Saldo principale (€)';
+  document.getElementById('editBalMain').value=balance;
+  if(currentBank==='fineco'){
+    document.getElementById('editBalSecLabel').textContent='Fido (€)';
+    document.getElementById('editBalSec').value=bd().reserve;
+  }else{
+    document.getElementById('editBalSecLabel').textContent='Saldo Salvadanaio (€)';
+    document.getElementById('editBalSec').value=bd().salvadanaio;
+  }
+  document.getElementById('editBalSecGroup').style.display='block';
+  closeModal('detailModal');
+  document.getElementById('editBalModal').classList.add('open');
+}
+function saveEditBalance(){
+  const nm=parseFloat(document.getElementById('editBalMain').value);
+  const ns=parseFloat(document.getElementById('editBalSec').value);
+  if(isNaN(nm)){alert('Importo non valido');return;}
+  const init=txs().find(t=>t.isInitial);
+  if(init){init.balance=nm;init.amount=nm;}
+  else txs().unshift({id:'init_'+Date.now(),bank:currentBank,date:new Date().toISOString().split('T')[0]+'T00:00:00',amount:nm,type:'income',desc:'Saldo iniziale',balance:nm,realBalance:null,isInitial:true,recurring:false,createdAt:0});
+  if(currentBank==='fineco'&&!isNaN(ns))bd().reserve=ns;
+  // BBVA: salvadanaio is ONLY updated via edit, never by movements
+  if(currentBank==='bbva'&&!isNaN(ns))bd().salvadanaio=ns;
+  recalcBalances();save();closeModal('editBalModal');renderAll();
+}
+
+// ── ADD / EDIT TX ─────────────────────────────────────────────────────────────
+function openAdd(){
+  editingId=null;
+  document.getElementById('addModalTitle').textContent='Nuovo Movimento';
+  document.getElementById('inputAmount').value='';
+  document.getElementById('inputDesc').value='';
+  document.getElementById('inputDate').value=new Date().toISOString().split('T')[0];
+  document.getElementById('inputTime').value='00:00';
+  setType('expense');isRecurring=false;
+  document.getElementById('recurringToggle').classList.remove('on');
+  document.getElementById('freqGroup').style.display='none';
+  document.getElementById('addModal').classList.add('open');
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+function setType(t){currentType=t;document.getElementById('btnExpense').className='type-btn'+(t==='expense'?' active-expense':'');document.getElementById('btnIncome').className='type-btn'+(t==='income'?' active-income':'');}
+function toggleRecurring(){isRecurring=!isRecurring;document.getElementById('recurringToggle').classList.toggle('on',isRecurring);document.getElementById('freqGroup').style.display=isRecurring?'block':'none';}
+function setFreq(btn,freq){currentFreq=freq;document.querySelectorAll('.freq-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');}
+function saveTransaction(){
+  const amount=parseFloat(document.getElementById('inputAmount').value);
+  const desc=document.getElementById('inputDesc').value.trim();
+  const dateVal=document.getElementById('inputDate').value;
+  const timeVal=document.getElementById('inputTime').value||'00:00';
+  if(!amount||!desc||!dateVal){alert('Compila importo, causale e data');return;}
+  const date=dateVal+'T'+timeVal+':00';
+  const id=editingId||'tx_'+Date.now();
+  const orig=editingId?txs().find(t=>t.id===editingId):null;
+  const tx={id,bank:currentBank,date,amount,type:currentType,desc,balance:0,realBalance:null,recurring:isRecurring,recurFreq:isRecurring?currentFreq:null,recurDay:isRecurring?(parseInt(document.getElementById('freqDayInput').value)||null):null,createdAt:orig?orig.createdAt:Date.now()};
+  if(editingId){const i=txs().findIndex(t=>t.id===editingId);if(i>=0)txs()[i]=tx;}
+  else txs().push(tx);
+  if(isRecurring&&!recs().find(r=>r.desc===desc))recs().push({id:'rec_'+Date.now(),bank:currentBank,desc,amount,type:currentType,freq:currentFreq,day:parseInt(document.getElementById('freqDayInput').value)||null,createdAt:Date.now()});
+  recalcBalances();save();closeModal('addModal');renderAll();
+}
+
+// ── DETAIL ────────────────────────────────────────────────────────────────────
+function openDetail(id){
+  currentDetailId=id;
+  const tx=txs().find(t=>t.id===id);if(!tx)return;
+  document.getElementById('detailTitle').textContent=tx.desc;
+  const cfg=bcfg();
+  let secLine='';
+  if(currentBank==='fineco'&&tx.realBalance!=null){
+    const rc=tx.realBalance<0?'var(--red)':'var(--green)';
+    secLine=`<div class="detail-row"><span class="detail-key">Saldo reale</span><span class="detail-val" style="color:${rc}">${fmt(tx.realBalance)}</span></div>`;
+  }else if(currentBank==='bbva'){
+    secLine=`<div class="detail-row"><span class="detail-key">Saldo Salvadanaio</span><span class="detail-val" style="color:var(--green)">${fmt(bd().salvadanaio)}</span></div>`;
+  }
+  document.getElementById('detailContent').innerHTML=
+    `<div class="detail-row"><span class="detail-key">Tipo</span><span class="detail-val">${tx.type==='income'?'📥 Entrata':'📤 Uscita'}</span></div>`+
+    `<div class="detail-row"><span class="detail-key">Importo</span><span class="detail-val" style="color:${tx.type==='income'?'var(--green)':'var(--red)'}">${tx.type==='income'?'+':'-'}${fmt(tx.amount)}</span></div>`+
+    `<div class="detail-row"><span class="detail-key">Data e ora</span><span class="detail-val">${fmtDateTime(tx.date)}</span></div>`+
+    `<div class="detail-row"><span class="detail-key">Saldo dopo</span><span class="detail-val">${fmt(tx.balance)}</span></div>`+
+    secLine+
+    (tx.recurring?`<div class="detail-row"><span class="detail-key">Ricorrenza</span><span class="detail-val" style="color:var(--accent)">↻ ${FL[tx.recurFreq]||'mensile'}</span></div>`:'');
+  document.getElementById('editTxBtn').style.display=tx.isInitial?'none':'';
+  document.getElementById('delBtn').onclick=deleteTransaction;
+  document.getElementById('detailModal').classList.add('open');
+}
+function editTransaction(){
+  const tx=txs().find(t=>t.id===currentDetailId);if(!tx)return;
+  closeModal('detailModal');editingId=tx.id;
+  document.getElementById('addModalTitle').textContent='Modifica Movimento';
+  setType(tx.type);
+  document.getElementById('inputAmount').value=tx.amount;
+  document.getElementById('inputDesc').value=tx.desc;
+  document.getElementById('inputDate').value=tx.date.split('T')[0];
+  document.getElementById('inputTime').value=tx.date.includes('T')?tx.date.split('T')[1].slice(0,5):'00:00';
+  isRecurring=tx.recurring||false;
+  document.getElementById('recurringToggle').classList.toggle('on',isRecurring);
+  document.getElementById('freqGroup').style.display=isRecurring?'block':'none';
+  if(tx.recurFreq)currentFreq=tx.recurFreq;
+  document.getElementById('addModal').classList.add('open');
+}
+function openRecDetail(id){
+  currentDetailId=id;const r=recs().find(x=>x.id===id);if(!r)return;
+  document.getElementById('detailTitle').textContent=r.desc;
+  document.getElementById('detailContent').innerHTML=
+    `<div class="detail-row"><span class="detail-key">Tipo</span><span class="detail-val">${r.type==='income'?'📥 Entrata':'📤 Uscita'}</span></div>`+
+    `<div class="detail-row"><span class="detail-key">Importo</span><span class="detail-val" style="color:${r.type==='income'?'var(--green)':'var(--red)'}">${fmt(r.amount)}</span></div>`+
+    `<div class="detail-row"><span class="detail-key">Frequenza</span><span class="detail-val">${FL[r.freq]||r.freq}</span></div>`+
+    (r.day?`<div class="detail-row"><span class="detail-key">Giorno</span><span class="detail-val">${r.day}</span></div>`:'');
+  document.getElementById('editTxBtn').style.display='none';
+  document.getElementById('delBtn').onclick=()=>deleteRecurring(id);
+  document.getElementById('detailModal').classList.add('open');
+}
+function deleteTransaction(){
+  if(!currentDetailId)return;
+  bankData[currentBank].transactions=txs().filter(t=>t.id!==currentDetailId);
+  recalcBalances();save();closeModal('detailModal');renderAll();
+}
+function deleteRecurring(id){
+  bankData[currentBank].recurring=recs().filter(r=>r.id!==id);
+  save();closeModal('detailModal');renderRecurring();
+}
+
+// ── SEARCH ────────────────────────────────────────────────────────────────────
+function openSearch(){
+  document.getElementById('searchInput').value='';
+  document.getElementById('searchResults').innerHTML='';
+  document.getElementById('searchResultsLabel').textContent='';
+  document.getElementById('searchClearBtn').style.display='none';
+  searchFilter='all';
+  document.querySelectorAll('.search-filter-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sf-all').classList.add('active');
+  document.getElementById('searchModal').classList.add('open');
+  setTimeout(()=>document.getElementById('searchInput').focus(),350);
+}
+function closeSearchOnBg(e){if(e.target===document.getElementById('searchModal'))document.getElementById('searchModal').classList.remove('open');}
+function clearSearch(){document.getElementById('searchInput').value='';document.getElementById('searchClearBtn').style.display='none';document.getElementById('searchResults').innerHTML='';document.getElementById('searchResultsLabel').textContent='';document.getElementById('searchInput').focus();}
+function setSearchFilter(f,btn){searchFilter=f;document.querySelectorAll('.search-filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');runSearch();}
+function runSearch(){
+  const raw=document.getElementById('searchInput').value.trim();
+  document.getElementById('searchClearBtn').style.display=raw?'block':'none';
+  if(!raw){document.getElementById('searchResults').innerHTML='';document.getElementById('searchResultsLabel').textContent='';return;}
+  const q=raw.toLowerCase();
+  let res=[...txs()].filter(tx=>{
+    if(searchFilter==='income'&&tx.type!=='income')return false;
+    if(searchFilter==='expense'&&tx.type!=='expense')return false;
+    return [tx.desc,fmt(tx.amount),fmtDate(tx.date),String(tx.amount)].join(' ').toLowerCase().includes(q);
+  }).sort((a,b)=>new Date(b.date)-new Date(a.date)||b.createdAt-a.createdAt);
+  document.getElementById('searchResultsLabel').textContent=res.length===0?'Nessun risultato':res.length===1?'1 risultato':res.length+' risultati';
+  document.getElementById('searchResults').innerHTML=res.length===0?emptyHtml('🔍','Nessun movimento trovato',''):res.map(t=>txHtml(t,q)).join('');
+}
+function highlightText(text,q){if(!q)return text;const i=text.toLowerCase().indexOf(q);if(i===-1)return text;return text.slice(0,i)+'<span class="search-highlight">'+text.slice(i,i+q.length)+'</span>'+text.slice(i+q.length);}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+document.getElementById('fabBtn').addEventListener('click',openAdd);
+document.getElementById('searchBtn').addEventListener('click',openSearch);
+['addModal','detailModal','editBalModal','editCardModal','searchModal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',e=>{if(e.target===document.getElementById(id))closeModal(id);});
+});
+
+load();
+document.documentElement.style.setProperty('--bank-color',BANKS[currentBank].color);
+document.getElementById('appTitle').textContent='🏦 '+BANKS[currentBank].name;
+document.getElementById('tab-cards').style.display=currentBank==='fineco'?'':'none';
+document.getElementById('nav-cards').style.display=currentBank==='fineco'?'':'none';
+renderAll();
+
+if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
+</script>
+</body>
+</html>
